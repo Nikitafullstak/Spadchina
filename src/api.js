@@ -102,6 +102,25 @@ export const api = {
       body: JSON.stringify({ answers }),
     }),
 
+  // Team battles
+  getTeamBattleCategories: () => request('/api/team-battles/categories'),
+  checkTeamBattleCode: (code) => request(`/api/team-battles/check?code=${encodeURIComponent(code)}`),
+  getTeamBattle: (code) => request(`/api/team-battles/${encodeURIComponent(code)}`),
+  createTeamBattle: (code, category, questionCount) =>
+    request('/api/team-battles', {
+      method: 'POST',
+      body: JSON.stringify({ code, category, question_count: questionCount }),
+    }),
+  joinTeamBattle: (code) =>
+    request(`/api/team-battles/${encodeURIComponent(code)}/join`, {
+      method: 'POST',
+    }),
+  finishTeamBattle: (code, answers) =>
+    request(`/api/team-battles/${encodeURIComponent(code)}/finish`, {
+      method: 'POST',
+      body: JSON.stringify({ answers }),
+    }),
+
   // Admin
   createArticle: (article) =>
     request('/api/admin/articles', {

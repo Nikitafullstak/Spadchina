@@ -130,3 +130,34 @@ type DuelAnswer struct {
 type DuelFinishRequest struct {
 	Answers []DuelAnswer `json:"answers"`
 }
+
+type TeamBattleCategory struct {
+	Category      string `json:"category"`
+	CategoryLabel string `json:"category_label"`
+	QuestionCount int    `json:"question_count"`
+}
+
+type TeamBattle struct {
+	ID            int                     `json:"id"`
+	Code          string                  `json:"code"`
+	Creator       string                  `json:"creator"`
+	Category      string                  `json:"category"`
+	CategoryLabel string                  `json:"category_label"`
+	Questions     []DuelQuestion          `json:"questions"`
+	Participants  []TeamBattleParticipant `json:"participants"`
+	CreatedAt     string                  `json:"created_at"`
+	UpdatedAt     string                  `json:"updated_at"`
+}
+
+type TeamBattleParticipant struct {
+	Username  string `json:"username"`
+	Score     int    `json:"score"`
+	Completed bool   `json:"completed"`
+	UpdatedAt string `json:"updated_at"`
+}
+
+type TeamBattleCreateRequest struct {
+	Code          string `json:"code"`
+	Category      string `json:"category"`
+	QuestionCount int    `json:"question_count"`
+}

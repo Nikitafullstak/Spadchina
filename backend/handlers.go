@@ -839,6 +839,376 @@ func sortedInts(values []int) []int {
 	return next
 }
 
+func teamBattlesHandler(w http.ResponseWriter, r *http.Request) {
+	enableCORS(w, r)
+
+	switch r.Method {
+	case http.MethodGet:
+		code := strings.TrimSpace(r.URL.Query().Get("code"))
+		if code == "" {
+			respondError(w, "code required", http.StatusBadRequest)
+			return
+		}
+		respondTeamBattleByCode(w, code)
+	case http.MethodPost:
+		createTeamBattleHandler(w, r)
+	default:
+		respondError(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func teamBattleActionHandler(w http.ResponseWriter, r *http.Request) {
+	enableCORS(w, r)
+
+	parts := strings.Split(strings.TrimPrefix(r.URL.Path, "/api/team-battles/"), "/")
+	if len(parts) == 0 || parts[0] == "" {
+		respondError(w, "battle code required", http.StatusBadRequest)
+		return
+	}
+
+	if parts[0] == "categories" && r.Method == http.MethodGet {
+		getTeamBattleCategoriesHandler(w, r)
+		return
+	}
+
+	if parts[0] == "check" && r.Method == http.MethodGet {
+		checkTeamBattleCodeHandler(w, r)
+		return
+	}
+
+	code := strings.TrimSpace(parts[0])
+	if r.Method == http.MethodGet && len(parts) == 1 {
+		respondTeamBattleByCode(w, code)
+		return
+	}
+
+	if r.Method == http.MethodPost && len(parts) == 2 {
+		switch parts[1] {
+		case "join":
+			joinTeamBattleHandler(w, r, code)
+		case "finish":
+			finishTeamBattleHandler(w, r, code)
+		default:
+			respondError(w, "unknown team battle action", http.StatusNotFound)
+		}
+		return
+	}
+
+	respondError(w, "method not allowed", http.StatusMethodNotAllowed)
+}
+
+func getTeamBattleCategoriesHandler(w http.ResponseWriter, r *http.Request) {
+	rows, err := db.Query(`
+		SELECT category, MIN(category_label)
+		FROM articles
+		GROUP BY category
+		ORDER BY MIN(category_label)
+	`)
+	if err != nil {
+		respondError(w, "db error", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	categories := []TeamBattleCategory{}
+	for rows.Next() {
+		var item TeamBattleCategory
+		if err := rows.Scan(&item.Category, &item.CategoryLabel); err == nil {
+			item.QuestionCount = countQuestionsForCategory(item.Category)
+			categories = append(categories, item)
+		}
+	}
+	respondJSON(w, categories, http.StatusOK)
+}
+
+func checkTeamBattleCodeHandler(w http.ResponseWriter, r *http.Request) {
+	code := strings.TrimSpace(r.URL.Query().Get("code"))
+	if !isSixDigitCode(code) {
+		respondError(w, "code must contain exactly 6 digits", http.StatusBadRequest)
+		return
+	}
+
+	_, exists := findTeamBattleIDByCode(code)
+	respondJSON(w, map[string]interface{}{
+		"code":      code,
+		"available": !exists,
+	}, http.StatusOK)
+}
+
+func createTeamBattleHandler(w http.ResponseWriter, r *http.Request) {
+	claims := userFromContext(r.Context())
+
+	var req TeamBattleCreateRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondError(w, "invalid request", http.StatusBadRequest)
+		return
+	}
+
+	code := strings.TrimSpace(req.Code)
+	if !isSixDigitCode(code) {
+		respondError(w, "code must contain exactly 6 digits", http.StatusBadRequest)
+		return
+	}
+
+	questionCount := req.QuestionCount
+	if questionCount < 10 || questionCount > 20 {
+		respondError(w, "question count must be from 10 to 20", http.StatusBadRequest)
+		return
+	}
+
+	categoryLabel, ok := findTeamBattleCategoryLabel(req.Category)
+	if !ok {
+		respondError(w, "category not found", http.StatusNotFound)
+		return
+	}
+
+	questions, err := buildTeamBattleQuestions(req.Category, questionCount)
+	if err != nil {
+		respondError(w, "not enough questions for category", http.StatusInternalServerError)
+		return
+	}
+	questionsJSON, _ := json.Marshal(questions)
+
+	tx, err := db.Begin()
+	if err != nil {
+		respondError(w, "db error", http.StatusInternalServerError)
+		return
+	}
+	defer tx.Rollback()
+
+	res, err := tx.Exec(`
+		INSERT INTO team_battles (code, creator_id, category, category_label, questions)
+		VALUES (?, ?, ?, ?, ?)
+	`, code, claims.UserID, req.Category, categoryLabel, string(questionsJSON))
+	if err != nil {
+		if strings.Contains(err.Error(), "UNIQUE") || strings.Contains(err.Error(), "constraint") {
+			respondError(w, "code already exists", http.StatusConflict)
+			return
+		}
+		respondError(w, "db error", http.StatusInternalServerError)
+		return
+	}
+
+	battleID, _ := res.LastInsertId()
+	_, err = tx.Exec(`
+		INSERT INTO team_battle_participants (battle_id, user_id)
+		VALUES (?, ?)
+	`, battleID, claims.UserID)
+	if err != nil {
+		respondError(w, "db error", http.StatusInternalServerError)
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
+		respondError(w, "db error", http.StatusInternalServerError)
+		return
+	}
+
+	respondTeamBattleByCode(w, code)
+}
+
+func joinTeamBattleHandler(w http.ResponseWriter, r *http.Request, code string) {
+	claims := userFromContext(r.Context())
+	battleID, ok := findTeamBattleIDByCode(code)
+	if !ok {
+		respondError(w, "team battle not found", http.StatusNotFound)
+		return
+	}
+
+	_, err := db.Exec(`
+		INSERT OR IGNORE INTO team_battle_participants (battle_id, user_id)
+		VALUES (?, ?)
+	`, battleID, claims.UserID)
+	if err != nil {
+		respondError(w, "db error", http.StatusInternalServerError)
+		return
+	}
+
+	respondTeamBattleByCode(w, code)
+}
+
+func finishTeamBattleHandler(w http.ResponseWriter, r *http.Request, code string) {
+	claims := userFromContext(r.Context())
+	battle, ok := getTeamBattleByCode(code)
+	if !ok {
+		respondError(w, "team battle not found", http.StatusNotFound)
+		return
+	}
+
+	var req DuelFinishRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondError(w, "invalid request", http.StatusBadRequest)
+		return
+	}
+
+	score := scoreTeamBattleAnswers(battle.Questions, req.Answers)
+	_, err := db.Exec(`
+		INSERT INTO team_battle_participants (battle_id, user_id, score, updated_at)
+		VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+		ON CONFLICT(battle_id, user_id) DO UPDATE SET
+			score = excluded.score,
+			updated_at = CURRENT_TIMESTAMP
+	`, battle.ID, claims.UserID, score)
+	if err != nil {
+		respondError(w, "db error", http.StatusInternalServerError)
+		return
+	}
+
+	respondTeamBattleByCode(w, code)
+}
+
+func respondTeamBattleByCode(w http.ResponseWriter, code string) {
+	battle, ok := getTeamBattleByCode(code)
+	if !ok {
+		respondError(w, "team battle not found", http.StatusNotFound)
+		return
+	}
+	respondJSON(w, battle, http.StatusOK)
+}
+
+func getTeamBattleByCode(code string) (TeamBattle, bool) {
+	row := db.QueryRow(`
+		SELECT tb.id, tb.code, u.username, tb.category, tb.category_label,
+			tb.questions, tb.created_at, tb.updated_at
+		FROM team_battles tb
+		JOIN users u ON u.id = tb.creator_id
+		WHERE tb.code = ?
+	`, code)
+
+	var battle TeamBattle
+	var questionsRaw string
+	err := row.Scan(
+		&battle.ID,
+		&battle.Code,
+		&battle.Creator,
+		&battle.Category,
+		&battle.CategoryLabel,
+		&questionsRaw,
+		&battle.CreatedAt,
+		&battle.UpdatedAt,
+	)
+	if err != nil {
+		return TeamBattle{}, false
+	}
+
+	json.Unmarshal([]byte(questionsRaw), &battle.Questions)
+	battle.Participants = getTeamBattleParticipants(battle.ID)
+	return battle, true
+}
+
+func getTeamBattleParticipants(battleID int) []TeamBattleParticipant {
+	rows, err := db.Query(`
+		SELECT u.username, tbp.score, tbp.updated_at
+		FROM team_battle_participants tbp
+		JOIN users u ON u.id = tbp.user_id
+		WHERE tbp.battle_id = ?
+		ORDER BY tbp.score DESC, tbp.updated_at ASC
+	`, battleID)
+	if err != nil {
+		return []TeamBattleParticipant{}
+	}
+	defer rows.Close()
+
+	participants := []TeamBattleParticipant{}
+	for rows.Next() {
+		var item TeamBattleParticipant
+		if err := rows.Scan(&item.Username, &item.Score, &item.UpdatedAt); err == nil {
+			item.Completed = item.Score >= 0
+			participants = append(participants, item)
+		}
+	}
+	return participants
+}
+
+func findTeamBattleIDByCode(code string) (int, bool) {
+	var id int
+	err := db.QueryRow("SELECT id FROM team_battles WHERE code = ?", code).Scan(&id)
+	return id, err == nil
+}
+
+func findTeamBattleCategoryLabel(category string) (string, bool) {
+	var label string
+	err := db.QueryRow(`
+		SELECT category_label
+		FROM articles
+		WHERE category = ?
+		ORDER BY id
+		LIMIT 1
+	`, category).Scan(&label)
+	return label, err == nil
+}
+
+func buildTeamBattleQuestions(category string, count int) ([]DuelQuestion, error) {
+	rows, err := db.Query(`
+		SELECT category, category_label, questions
+		FROM articles
+		WHERE category = ?
+		ORDER BY id
+	`, category)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	questions := []DuelQuestion{}
+	seen := map[int]bool{}
+	for rows.Next() {
+		var itemCategory, label, raw string
+		if err := rows.Scan(&itemCategory, &label, &raw); err != nil {
+			continue
+		}
+		var articleQuestions []DuelQuestion
+		if err := json.Unmarshal([]byte(raw), &articleQuestions); err != nil {
+			continue
+		}
+		for _, question := range articleQuestions {
+			if seen[question.ID] {
+				continue
+			}
+			question.Category = itemCategory
+			question.CategoryLabel = label
+			questions = append(questions, question)
+			seen[question.ID] = true
+			if len(questions) == count {
+				return questions, nil
+			}
+		}
+	}
+
+	if len(questions) < count {
+		return nil, fmt.Errorf("not enough questions for category")
+	}
+	return questions[:count], nil
+}
+
+func scoreTeamBattleAnswers(questions []DuelQuestion, answers []DuelAnswer) int {
+	answerMap := map[int]DuelAnswer{}
+	for _, answer := range answers {
+		answerMap[answer.QuestionID] = answer
+	}
+
+	total := 0
+	for _, question := range questions {
+		answer, ok := answerMap[question.ID]
+		if ok && isDuelAnswerCorrect(question.Correct, answer.Selected) {
+			total += 100
+		}
+	}
+	return total
+}
+
+func isSixDigitCode(code string) bool {
+	if len(code) != 6 {
+		return false
+	}
+	for _, char := range code {
+		if char < '0' || char > '9' {
+			return false
+		}
+	}
+	return true
+}
+
 func finalizeDuelIfReady(duelID int) {
 	var challengerID, opponentID, challengerScore, opponentScore int
 	var status string

@@ -46,6 +46,7 @@ export default function Header({ activeTab, setActiveTab, onLoginOpen, onOpenCha
     { id: 'leaderboard', label: 'Лидеры' },
     { id: 'chat', label: 'Чат' },
     { id: 'duels', label: 'Батлы' },
+    { id: 'teams', label: 'Команды' },
     { id: 'shop', label: 'Магазин' },
   ];
 

@@ -11,6 +11,7 @@ import Shop from './components/Shop.jsx';
 import Leaderboard from './components/Leaderboard.jsx';
 import Chat from './components/Chat.jsx';
 import Duels from './components/Duels.jsx';
+import TeamBattles from './components/TeamBattles.jsx';
 import AdminPanel from './components/AdminPanel.jsx';
 import Footer from './components/Footer.jsx';
 import LoginModal from './components/LoginModal.jsx';
@@ -115,6 +116,8 @@ export default function App() {
         return <Chat initialPeer={chatPeer} onLoginOpen={() => setLoginOpen(true)} />;
       case 'duels':
         return <Duels initialOpponent={duelPeer} onLoginOpen={() => setLoginOpen(true)} />;
+      case 'teams':
+        return <TeamBattles onLoginOpen={() => setLoginOpen(true)} />;
       case 'shop':
         return <Shop onLoginOpen={() => setLoginOpen(true)} />;
       case 'admin':

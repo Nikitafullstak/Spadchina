@@ -77,6 +77,28 @@ func initDB() {
 			FOREIGN KEY (winner_id) REFERENCES users(id)
 		);`,
 		`ALTER TABLE duels ADD COLUMN question_set INTEGER NOT NULL DEFAULT 0;`,
+		`CREATE TABLE IF NOT EXISTS team_battles (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			code TEXT UNIQUE NOT NULL,
+			creator_id INTEGER NOT NULL,
+			category TEXT NOT NULL,
+			category_label TEXT NOT NULL,
+			questions TEXT NOT NULL,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (creator_id) REFERENCES users(id)
+		);`,
+		`CREATE TABLE IF NOT EXISTS team_battle_participants (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			battle_id INTEGER NOT NULL,
+			user_id INTEGER NOT NULL,
+			score INTEGER NOT NULL DEFAULT -1,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (battle_id) REFERENCES team_battles(id),
+			FOREIGN KEY (user_id) REFERENCES users(id),
+			UNIQUE(battle_id, user_id)
+		);`,
 	}
 
 	for _, q := range queries {
@@ -90,6 +112,7 @@ func initDB() {
 
 	createAdmin()
 	seedArticles()
+	ensureTeamBattleQuestionMinimums()
 }
 
 func createAdmin() {

@@ -43,6 +43,10 @@ func main() {
 	mux.HandleFunc("/api/duels", authMiddleware(duelsHandler))
 	mux.HandleFunc("/api/duels/", authMiddleware(duelActionHandler))
 
+	// Team battles
+	mux.HandleFunc("/api/team-battles", authMiddleware(teamBattlesHandler))
+	mux.HandleFunc("/api/team-battles/", authMiddleware(teamBattleActionHandler))
+
 	// Admin
 	mux.HandleFunc("/api/admin/articles", adminMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
