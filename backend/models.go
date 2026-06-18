@@ -98,6 +98,7 @@ type Duel struct {
 	Challenger      string         `json:"challenger"`
 	Opponent        string         `json:"opponent"`
 	Status          string         `json:"status"`
+	QuestionSet     int            `json:"question_set"`
 	Questions       []DuelQuestion `json:"questions"`
 	ChallengerScore int            `json:"challenger_score"`
 	OpponentScore   int            `json:"opponent_score"`

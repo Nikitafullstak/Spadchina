@@ -245,6 +245,7 @@ export default function Duels({ initialOpponent, onLoginOpen }) {
           <div className="duel-topbar">
             <button className="btn-ghost" onClick={() => setActiveDuel(null)}>К батлам</button>
             <span>{activeDuel.challenger} против {activeDuel.opponent}</span>
+            <span className="duel-set-badge">Набор вопросов #{activeDuel.question_set + 1}</span>
             <strong>{timeLeft} сек</strong>
           </div>
           <div className="quiz-card duel-card">

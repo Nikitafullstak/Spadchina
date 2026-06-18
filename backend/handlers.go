@@ -444,7 +444,7 @@ func duelsHandler(w http.ResponseWriter, r *http.Request) {
 func getDuelsHandler(w http.ResponseWriter, r *http.Request) {
 	claims := userFromContext(r.Context())
 	rows, err := db.Query(`
-		SELECT d.id, cu.username, ou.username, d.status, d.questions,
+		SELECT d.id, cu.username, ou.username, d.status, d.question_set, d.questions,
 			d.challenger_score, d.opponent_score, COALESCE(wu.username, ''),
 			d.created_at, d.updated_at
 		FROM duels d
@@ -491,7 +491,11 @@ func createDuelHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	questions, err := buildDuelQuestions()
+	var duelCount int
+	db.QueryRow("SELECT COUNT(*) FROM duels").Scan(&duelCount)
+	setIndex := duelCount % duelSetCount
+
+	questions, err := buildDuelQuestions(setIndex)
 	if err != nil {
 		respondError(w, "not enough questions", http.StatusInternalServerError)
 		return
@@ -499,9 +503,9 @@ func createDuelHandler(w http.ResponseWriter, r *http.Request) {
 	questionsJSON, _ := json.Marshal(questions)
 
 	res, err := db.Exec(`
-		INSERT INTO duels (challenger_id, opponent_id, questions)
-		VALUES (?, ?, ?)
-	`, claims.UserID, opponentID, string(questionsJSON))
+		INSERT INTO duels (challenger_id, opponent_id, question_set, questions)
+		VALUES (?, ?, ?, ?)
+	`, claims.UserID, opponentID, setIndex, string(questionsJSON))
 	if err != nil {
 		respondError(w, "db error", http.StatusInternalServerError)
 		return
@@ -699,7 +703,7 @@ func finishDuelHandler(w http.ResponseWriter, r *http.Request, duelID int) {
 
 func getDuelForUser(duelID int, userID int) (Duel, bool) {
 	row := db.QueryRow(`
-		SELECT d.id, cu.username, ou.username, d.status, d.questions,
+		SELECT d.id, cu.username, ou.username, d.status, d.question_set, d.questions,
 			d.challenger_score, d.opponent_score, COALESCE(wu.username, ''),
 			d.created_at, d.updated_at
 		FROM duels d
@@ -725,6 +729,7 @@ func scanDuel(scanner duelScanner) (Duel, bool) {
 		&duel.Challenger,
 		&duel.Opponent,
 		&duel.Status,
+		&duel.QuestionSet,
 		&questionsRaw,
 		&duel.ChallengerScore,
 		&duel.OpponentScore,
@@ -739,14 +744,21 @@ func scanDuel(scanner duelScanner) (Duel, bool) {
 	return duel, true
 }
 
-func buildDuelQuestions() ([]DuelQuestion, error) {
+const duelSetSize = 5
+const duelSetCount = 10
+
+func buildDuelQuestions(setIndex int) ([]DuelQuestion, error) {
+	if setIndex < 0 || setIndex >= duelSetCount {
+		setIndex = 0
+	}
+
 	rows, err := db.Query("SELECT category, category_label, questions FROM articles ORDER BY id")
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	questions := []DuelQuestion{}
+	allQuestions := []DuelQuestion{}
 	for rows.Next() {
 		var category, label, raw string
 		if err := rows.Scan(&category, &label, &raw); err != nil {
@@ -759,16 +771,17 @@ func buildDuelQuestions() ([]DuelQuestion, error) {
 		for _, question := range articleQuestions {
 			question.Category = category
 			question.CategoryLabel = label
-			questions = append(questions, question)
-			if len(questions) == 5 {
-				return questions, nil
-			}
+			allQuestions = append(allQuestions, question)
 		}
 	}
-	if len(questions) < 5 {
-		return nil, fmt.Errorf("not enough questions")
+
+	start := setIndex * duelSetSize
+	end := start + duelSetSize
+	if end > len(allQuestions) {
+		return nil, fmt.Errorf("not enough questions for set %d", setIndex)
 	}
-	return questions[:5], nil
+
+	return allQuestions[start:end], nil
 }
 
 func scoreDuelAnswers(questions []DuelQuestion, answers []DuelAnswer) int {

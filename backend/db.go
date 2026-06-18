@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"log"
+	"strings"
 
 	"golang.org/x/crypto/bcrypt"
 	_ "modernc.org/sqlite"
@@ -64,6 +65,7 @@ func initDB() {
 			challenger_id INTEGER NOT NULL,
 			opponent_id INTEGER NOT NULL,
 			status TEXT NOT NULL DEFAULT 'pending',
+			question_set INTEGER NOT NULL DEFAULT 0,
 			questions TEXT NOT NULL,
 			challenger_score INTEGER NOT NULL DEFAULT -1,
 			opponent_score INTEGER NOT NULL DEFAULT -1,
@@ -74,10 +76,14 @@ func initDB() {
 			FOREIGN KEY (opponent_id) REFERENCES users(id),
 			FOREIGN KEY (winner_id) REFERENCES users(id)
 		);`,
+		`ALTER TABLE duels ADD COLUMN question_set INTEGER NOT NULL DEFAULT 0;`,
 	}
 
 	for _, q := range queries {
 		if _, err := db.Exec(q); err != nil {
+			if strings.Contains(err.Error(), "duplicate column name") {
+				continue
+			}
 			log.Fatal(err)
 		}
 	}
