@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -41,8 +42,14 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if len(req.Username) < 3 || len(req.Password) < 6 {
-		respondError(w, "username min 3 chars, password min 6 chars", http.StatusBadRequest)
+	name := strings.TrimSpace(req.Name)
+	if name == "" {
+		name = strings.TrimSpace(req.Username)
+	}
+	email := strings.ToLower(strings.TrimSpace(req.Email))
+
+	if len(name) < 2 || len(req.Password) < 6 || !isValidEmail(email) {
+		respondError(w, "name min 2 chars, valid email required, password min 6 chars", http.StatusBadRequest)
 		return
 	}
 
@@ -52,14 +59,18 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := db.Exec("INSERT INTO users (username, password) VALUES (?, ?)", req.Username, string(hash))
+	username := uniqueUsernameFromName(name)
+	res, err := db.Exec(`
+		INSERT INTO users (username, name, email, password)
+		VALUES (?, ?, ?, ?)
+	`, username, name, email, string(hash))
 	if err != nil {
-		respondError(w, "username already exists", http.StatusConflict)
+		respondError(w, "email already exists", http.StatusConflict)
 		return
 	}
 
 	id, _ := res.LastInsertId()
-	user := User{ID: int(id), Username: req.Username, Role: "user", Points: 0}
+	user := User{ID: int(id), Username: username, Name: name, Email: email, Role: "user", Points: 0}
 	token, err := generateToken(user)
 	if err != nil {
 		respondError(w, "token error", http.StatusInternalServerError)
@@ -83,8 +94,15 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var user User
-	err := db.QueryRow("SELECT id, username, password, role, points FROM users WHERE username = ?", req.Username).
-		Scan(&user.ID, &user.Username, &user.Password, &user.Role, &user.Points)
+	email := strings.ToLower(strings.TrimSpace(req.Email))
+	if email == "" {
+		email = strings.ToLower(strings.TrimSpace(req.Username))
+	}
+	err := db.QueryRow(`
+		SELECT id, username, COALESCE(name, username), COALESCE(email, ''), password, role, points
+		FROM users
+		WHERE lower(email) = ?
+	`, email).Scan(&user.ID, &user.Username, &user.Name, &user.Email, &user.Password, &user.Role, &user.Points)
 	if err != nil {
 		respondError(w, "invalid credentials", http.StatusUnauthorized)
 		return
@@ -110,14 +128,38 @@ func meHandler(w http.ResponseWriter, r *http.Request) {
 	claims := userFromContext(r.Context())
 
 	var user User
-	err := db.QueryRow("SELECT id, username, role, points FROM users WHERE id = ?", claims.UserID).
-		Scan(&user.ID, &user.Username, &user.Role, &user.Points)
+	err := db.QueryRow(`
+		SELECT id, username, COALESCE(name, username), COALESCE(email, ''), role, points
+		FROM users
+		WHERE id = ?
+	`, claims.UserID).Scan(&user.ID, &user.Username, &user.Name, &user.Email, &user.Role, &user.Points)
 	if err != nil {
 		respondError(w, "user not found", http.StatusNotFound)
 		return
 	}
 
 	respondJSON(w, user, http.StatusOK)
+}
+
+func isValidEmail(email string) bool {
+	return regexp.MustCompile(`^[^\s@]+@[^\s@]+\.[^\s@]+$`).MatchString(email)
+}
+
+func uniqueUsernameFromName(name string) string {
+	base := strings.TrimSpace(name)
+	if base == "" {
+		base = "user"
+	}
+
+	username := base
+	for suffix := 1; ; suffix += 1 {
+		var count int
+		_ = db.QueryRow("SELECT COUNT(*) FROM users WHERE username = ?", username).Scan(&count)
+		if count == 0 {
+			return username
+		}
+		username = fmt.Sprintf("%s %d", base, suffix)
+	}
 }
 
 func getArticlesHandler(w http.ResponseWriter, r *http.Request) {
@@ -886,6 +928,8 @@ func teamBattleActionHandler(w http.ResponseWriter, r *http.Request) {
 		switch parts[1] {
 		case "join":
 			joinTeamBattleHandler(w, r, code)
+		case "start":
+			startTeamBattleHandler(w, r, code)
 		case "finish":
 			finishTeamBattleHandler(w, r, code)
 		default:
@@ -1027,6 +1071,32 @@ func joinTeamBattleHandler(w http.ResponseWriter, r *http.Request, code string) 
 	respondTeamBattleByCode(w, code)
 }
 
+func startTeamBattleHandler(w http.ResponseWriter, r *http.Request, code string) {
+	claims := userFromContext(r.Context())
+
+	res, err := db.Exec(`
+		UPDATE team_battles
+		SET started = 1, updated_at = CURRENT_TIMESTAMP
+		WHERE code = ? AND creator_id = ?
+	`, code, claims.UserID)
+	if err != nil {
+		respondError(w, "db error", http.StatusInternalServerError)
+		return
+	}
+
+	affected, _ := res.RowsAffected()
+	if affected == 0 {
+		if _, ok := findTeamBattleIDByCode(code); !ok {
+			respondError(w, "team battle not found", http.StatusNotFound)
+			return
+		}
+		respondError(w, "only creator can start team battle", http.StatusForbidden)
+		return
+	}
+
+	respondTeamBattleByCode(w, code)
+}
+
 func finishTeamBattleHandler(w http.ResponseWriter, r *http.Request, code string) {
 	claims := userFromContext(r.Context())
 	battle, ok := getTeamBattleByCode(code)
@@ -1069,7 +1139,7 @@ func respondTeamBattleByCode(w http.ResponseWriter, code string) {
 func getTeamBattleByCode(code string) (TeamBattle, bool) {
 	row := db.QueryRow(`
 		SELECT tb.id, tb.code, u.username, tb.category, tb.category_label,
-			tb.questions, tb.created_at, tb.updated_at
+			tb.questions, tb.started, tb.created_at, tb.updated_at
 		FROM team_battles tb
 		JOIN users u ON u.id = tb.creator_id
 		WHERE tb.code = ?
@@ -1077,6 +1147,7 @@ func getTeamBattleByCode(code string) (TeamBattle, bool) {
 
 	var battle TeamBattle
 	var questionsRaw string
+	var started int
 	err := row.Scan(
 		&battle.ID,
 		&battle.Code,
@@ -1084,6 +1155,7 @@ func getTeamBattleByCode(code string) (TeamBattle, bool) {
 		&battle.Category,
 		&battle.CategoryLabel,
 		&questionsRaw,
+		&started,
 		&battle.CreatedAt,
 		&battle.UpdatedAt,
 	)
@@ -1092,6 +1164,7 @@ func getTeamBattleByCode(code string) (TeamBattle, bool) {
 	}
 
 	json.Unmarshal([]byte(questionsRaw), &battle.Questions)
+	battle.Started = started == 1
 	battle.Participants = getTeamBattleParticipants(battle.ID)
 	return battle, true
 }

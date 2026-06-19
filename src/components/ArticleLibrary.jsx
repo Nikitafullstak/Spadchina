@@ -3,6 +3,7 @@ import { api } from '../api.js';
 import { useUser } from '../contexts/UserContext.jsx';
 import { articles as localArticles } from '../data/articles.js';
 import ArticleCard from './ArticleCard.jsx';
+import Icon from './Icon.jsx';
 
 export default function ArticleLibrary({ onSelect }) {
   const { user } = useUser();
@@ -67,13 +68,13 @@ export default function ArticleLibrary({ onSelect }) {
   }, [filter, difficultyFilter, statusFilter, sortMode, query]);
 
   const categories = [
-    { id: 'all', label: 'Все', emoji: '✨' },
-    { id: 'history', label: 'История', emoji: '🏰' },
-    { id: 'culture', label: 'Культура', emoji: '🎭' },
-    { id: 'nature', label: 'Природа', emoji: '🌲' },
-    { id: 'traditions', label: 'Традиции', emoji: '🎪' },
-    { id: 'architecture', label: 'Архитектура', emoji: '🏛️' },
-    { id: 'memorial', label: 'Память', emoji: '🕯️' },
+    { id: 'all', label: 'Все', icon: 'all' },
+    { id: 'history', label: 'История', icon: 'history' },
+    { id: 'culture', label: 'Культура', icon: 'culture' },
+    { id: 'nature', label: 'Природа', icon: 'nature' },
+    { id: 'traditions', label: 'Традиции', icon: 'traditions' },
+    { id: 'architecture', label: 'Архитектура', icon: 'architecture' },
+    { id: 'memorial', label: 'Память', icon: 'memorial' },
   ];
 
   const difficulties = [
@@ -176,10 +177,7 @@ export default function ArticleLibrary({ onSelect }) {
         <div className="catalog-filter-panel">
           <div className="catalog-filter-top">
             <label className="search-field">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8" />
-                <path d="m21 21-4.3-4.3" />
-              </svg>
+              <Icon name="search" size={18} />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -239,7 +237,7 @@ export default function ArticleLibrary({ onSelect }) {
                 className={`filter-btn ${filter === cat.id ? 'active' : ''}`}
                 onClick={() => setFilter(cat.id)}
               >
-                <span>{cat.emoji}</span>
+                <Icon name={cat.icon} size={18} />
                 {cat.label}
               </button>
             ))}

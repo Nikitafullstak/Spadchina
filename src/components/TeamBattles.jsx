@@ -54,13 +54,34 @@ export default function TeamBattles({ onLoginOpen }) {
   const question = battle?.questions?.[current];
   const canCreate = createCode.length === 6 && category;
   const canJoin = joinCode.length === 6;
+  const isCreator = battle?.creator === user?.username;
 
-  const resetQuiz = () => {
+  const startLocalQuiz = () => {
     setCurrent(0);
     setSelected([]);
     setAnswers([]);
     setPlaying(true);
     setMessage(null);
+  };
+
+  const startBattle = async () => {
+    if (!battle?.code || loading) return;
+    if (!isCreator) {
+      setMessage('Начать командный батл может только создатель комнаты.');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      const nextBattle = await api.startTeamBattle(battle.code);
+      setBattle(nextBattle);
+      startLocalQuiz();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const generateFreeCode = async () => {
@@ -109,7 +130,7 @@ export default function TeamBattles({ onLoginOpen }) {
     try {
       const nextBattle = await api.joinTeamBattle(joinCode);
       setBattle(nextBattle);
-      setMessage(`Ты вошёл в комнату ${joinCode}. Подожди остальных или нажми «Начать», когда будешь готов.`);
+      setMessage(`Ты вошёл в комнату ${joinCode}. Жди, пока создатель комнаты нажмёт «Начать».`);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -137,6 +158,12 @@ export default function TeamBattles({ onLoginOpen }) {
 
     return () => window.clearInterval(timer);
   }, [battle?.code, playing]);
+
+  useEffect(() => {
+    if (battle?.started && !playing && !myResult?.completed) {
+      startLocalQuiz();
+    }
+  }, [battle?.started, myResult?.completed, playing]);
 
   const toggleAnswer = (index) => {
     if (!question) return;
@@ -351,7 +378,14 @@ export default function TeamBattles({ onLoginOpen }) {
               <div className="team-room-actions">
                 <button className="btn-ghost" onClick={refreshBattle}>Обновить результаты</button>
                 {!myResult?.completed && (
-                  <button className="btn-primary" onClick={resetQuiz}>Начать</button>
+                  <button
+                    className="btn-primary"
+                    onClick={startBattle}
+                    disabled={!isCreator || loading}
+                    title={isCreator ? 'Запустить командный батл для всех' : 'Начать может только создатель комнаты'}
+                  >
+                    {isCreator ? 'Начать' : 'Ждём создателя'}
+                  </button>
                 )}
               </div>
             </div>

@@ -6,7 +6,6 @@ import ArticleReader from './components/ArticleReader.jsx';
 import Quiz from './components/Quiz.jsx';
 import QuizResult from './components/QuizResult.jsx';
 import Progress from './components/Progress.jsx';
-import Achievements from './components/Achievements.jsx';
 import Shop from './components/Shop.jsx';
 import Leaderboard from './components/Leaderboard.jsx';
 import Chat from './components/Chat.jsx';
@@ -108,8 +107,6 @@ export default function App() {
         return <ArticleLibrary onSelect={handleSelectArticle} />;
       case 'progress':
         return <Progress />;
-      case 'achievements':
-        return <Achievements />;
       case 'leaderboard':
         return <Leaderboard onMessageUser={handleOpenChat} onBattleUser={handleOpenDuel} />;
       case 'chat':
@@ -137,7 +134,7 @@ export default function App() {
         onOpenDuel={handleOpenDuel}
       />
       <main className="main">{renderContent()}</main>
-      <Footer />
+      <Footer onNavigate={handleTabChange} />
       <LoginModal isOpen={loginOpen} onClose={() => setLoginOpen(false)} />
     </div>
   );

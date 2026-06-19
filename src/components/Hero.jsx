@@ -1,14 +1,17 @@
 import { useMemo } from 'react';
 import { articles } from '../data/articles.js';
 import { useUser } from '../contexts/UserContext.jsx';
+import { getImageSource } from '../utils/imageSource.js';
+
+import Icon from './Icon.jsx';
 
 const categoryMeta = {
-  history: { label: 'История', emoji: '🏰' },
-  culture: { label: 'Культура', emoji: '🎭' },
-  nature: { label: 'Природа', emoji: '🌲' },
-  traditions: { label: 'Традиции', emoji: '🎪' },
-  architecture: { label: 'Архитектура', emoji: '🏛️' },
-  memorial: { label: 'Память', emoji: '🕯️' },
+  history: { label: 'История', icon: 'history' },
+  culture: { label: 'Культура', icon: 'culture' },
+  nature: { label: 'Природа', icon: 'nature' },
+  traditions: { label: 'Традиции', icon: 'traditions' },
+  architecture: { label: 'Архитектура', icon: 'architecture' },
+  memorial: { label: 'Память', icon: 'memorial' },
 };
 
 const steps = [
@@ -25,13 +28,14 @@ export default function Hero({ onStart, onSelectArticle }) {
     () => articles[Math.floor(Math.random() * articles.length)],
     []
   );
+  const placeOfDaySource = getImageSource(placeOfDay.image);
 
   return (
     <>
       <section className="hero">
         <div className="container hero-content">
           <div className="hero-text">
-            {user && <span className="hero-welcome">Привет, {user.username}</span>}
+            {user && <span className="hero-welcome">Привет,{' '}{user.name || user.username}</span>}
             <span className="hero-label">Интерактивный гид по Беларуси</span>
             <h1>Узнай свою страну не&nbsp;по&nbsp;учебнику</h1>
             <p className="hero-subtitle">
@@ -59,6 +63,11 @@ export default function Hero({ onStart, onSelectArticle }) {
                 <h3>{placeOfDay.title}</h3>
                 <p>{placeOfDay.region}</p>
               </div>
+              {placeOfDaySource && (
+                <a className="image-source" href={placeOfDaySource.href} target="_blank" rel="noreferrer">
+                  Источник: {placeOfDaySource.label}
+                </a>
+              )}
             </article>
           </div>
         </div>
@@ -94,7 +103,7 @@ export default function Hero({ onStart, onSelectArticle }) {
                 className="category-card clean"
                 onClick={onStart}
               >
-                <span className="category-emoji">{meta.emoji}</span>
+                <span className="category-emoji"><Icon name={meta.icon} size={22} /></span>
                 <div>
                   <strong>{meta.label}</strong>
                   <span>{articles.filter((a) => a.category === key).length} мест</span>
@@ -116,25 +125,36 @@ export default function Hero({ onStart, onSelectArticle }) {
 
           <div className="featured-grid">
             {featuredPlaces.map((place) => (
-            <article
-              className="featured-card"
-              key={place.id}
-              style={{ backgroundImage: `url(${place.image})` }}
-              onClick={() => onSelectArticle?.(place)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault();
-                  onSelectArticle?.(place);
-                }
-              }}
-            >
+              <article
+                className="featured-card"
+                key={place.id}
+                style={{ backgroundImage: `url(${place.image})` }}
+                onClick={() => onSelectArticle?.(place)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    onSelectArticle?.(place);
+                  }
+                }}
+              >
                 <div>
                   <span className={`badge badge-${place.category}`}>{place.categoryLabel}</span>
                   <h3>{place.title}</h3>
                   <p>{place.region} · {place.questions.length} заданий</p>
                 </div>
+                {getImageSource(place.image) && (
+                  <a
+                    className="image-source"
+                    href={getImageSource(place.image).href}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    Источник: {getImageSource(place.image).label}
+                  </a>
+                )}
               </article>
             ))}
           </div>
@@ -155,6 +175,114 @@ export default function Hero({ onStart, onSelectArticle }) {
                 <p>{step.text}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="home-section about-section">
+        <div className="container">
+          <div className="section-head section-head-center">
+            <span className="section-kicker">О проекте</span>
+            <h2 className="section-title">Спадчына — это живая история рядом</h2>
+          </div>
+          <div className="about-grid">
+            <div className="about-card">
+              <span className="about-icon"><Icon name="pin" size={32} /></span>
+              <strong>Более {articles.length} мест</strong>
+              <p>
+                Замки, храмы, памятники, заповедники и музеи — каждая статья
+                рассказывает историю конкретного места с ключевыми фактами.
+              </p>
+            </div>
+            <div className="about-card">
+              <span className="about-icon"><Icon name="puzzle" size={32} /></span>
+              <strong>Интерактивные задания</strong>
+              <p>
+                После прочтения статьи проходи викторину, проверяй знания и
+                получай баллы за правильные ответы.
+              </p>
+            </div>
+            <div className="about-card">
+              <span className="about-icon"><Icon name="trophy" size={32} /></span>
+              <strong>Рейтинг и достижения</strong>
+              <p>
+                Соревнуйся с другими участниками в таблице лидеров, зарабатывай
+                достижения и покупай награды в магазине.
+              </p>
+            </div>
+            <div className="about-card">
+              <span className="about-icon"><Icon name="users" size={32} /></span>
+              <strong>Общение и батлы</strong>
+              <p>
+                Обсуждай прочитанное в чате, бросай друзьям культурные дуэли и
+                участвуй в командных батлах.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="home-section facts-section">
+        <div className="container">
+          <div className="section-head section-head-center">
+            <span className="section-kicker">Знаешь ли ты</span>
+            <h2 className="section-title">Беларусь в цифрах и фактах</h2>
+          </div>
+          <div className="facts-grid">
+            <div className="fact-card">
+              <strong>4</strong>
+              <span>объекта Всемирного наследия ЮНЕСКО</span>
+            </div>
+            <div className="fact-card">
+              <strong>10 000+</strong>
+              <span>озёр на территории страны</span>
+            </div>
+            <div className="fact-card">
+              <strong>40%</strong>
+              <span>территории покрыто лесами</span>
+            </div>
+            <div className="fact-card">
+              <strong>1000+</strong>
+              <span>лет истории Полоцка</span>
+            </div>
+            <div className="fact-card">
+              <strong>11</strong>
+              <span>миллионов жителей</span>
+            </div>
+            <div className="fact-card">
+              <strong>3</strong>
+              <span>языка в повседневном употреблении</span>
+            </div>
+          </div>
+          <p className="facts-note">
+            Это лишь малая часть того, что делает Беларусь уникальной. В
+            «Спадчыне» мы собираем самые интересные истории и помогаем узнать
+            родной край лучше.
+          </p>
+        </div>
+      </section>
+
+      <section className="home-section mission-section">
+        <div className="container mission-inner">
+          <div className="mission-text">
+            <span className="section-kicker">Наша миссия</span>
+            <h2 className="section-title">Сохранять и приумножать знания о Беларуси</h2>
+            <p>
+              Мы верим, что культурная память начинается с любопытства. Чем
+              больше мы знаем о своей стране, тем бережнее относимся к её
+              истории, природе и людям. «Спадчына» помогает сделать это в
+              удобной, современной и увлекательной форме.
+            </p>
+            <button className="btn-primary btn-large" onClick={onStart}>
+              Начать изучение
+            </button>
+          </div>
+          <div className="mission-quote">
+            <blockquote>
+              «Кто не знает прошлого, тот не стоит на прочном основании для
+              будущего».
+            </blockquote>
+            <cite>— Франциск Скорина</cite>
           </div>
         </div>
       </section>

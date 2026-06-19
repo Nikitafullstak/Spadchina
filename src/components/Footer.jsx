@@ -1,9 +1,52 @@
-export default function Footer() {
+export default function Footer({ onNavigate }) {
+  const currentYear = new Date().getFullYear();
+
+  const handleClick = (tab) => (event) => {
+    event.preventDefault();
+    onNavigate?.(tab);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <footer className="footer">
-      <div className="container footer-inner">
-        <p>© 2026 Культурный код Беларуси</p>
-        <p className="footer-sub">История, культура, природа и традиции в коротких уроках</p>
+      <div className="container footer-grid">
+        <div className="footer-brand">
+          <strong className="footer-logo">Спадчына</strong>
+          <p className="footer-sub">
+            Интерактивный гид по истории, культуре, природе и традициям Беларуси.
+            Изучай, проходи викторины и соревнуйся с друзьями.
+          </p>
+        </div>
+
+        <div className="footer-links">
+          <strong>Разделы</strong>
+          <nav>
+            <a href="#home" onClick={handleClick('home')}>Главная</a>
+            <a href="#library" onClick={handleClick('library')}>Достопримечательности</a>
+            <a href="#leaderboard" onClick={handleClick('leaderboard')}>Лидеры</a>
+            <a href="#shop" onClick={handleClick('shop')}>Магазин</a>
+          </nav>
+        </div>
+
+        <div className="footer-links">
+          <strong>Пользователю</strong>
+          <nav>
+            <a href="#progress" onClick={handleClick('progress')}>Прогресс</a>
+            <a href="#chat" onClick={handleClick('chat')}>Чат</a>
+            <a href="#duels" onClick={handleClick('duels')}>Батлы</a>
+          </nav>
+        </div>
+
+        <div className="footer-contact">
+          <strong>Связь</strong>
+          <p>По вопросам и предложениям пишите на почту:</p>
+          <a href="mailto:hello@spadchyna.by">hello@spadchyna.by</a>
+        </div>
+      </div>
+
+      <div className="container footer-bottom">
+        <p>© {currentYear} Спадчына. Все права защищены.</p>
+        <p className="footer-sub">Сделано с любовью к Беларуси.</p>
       </div>
     </footer>
   );

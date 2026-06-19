@@ -1,4 +1,8 @@
+import { getImageSource } from '../utils/imageSource.js';
+
 export default function ArticleReader({ article, onStartQuiz, onBack }) {
+  const imageSource = getImageSource(article.image);
+
   return (
     <section className="section">
       <div className="container">
@@ -12,6 +16,11 @@ export default function ArticleReader({ article, onStartQuiz, onBack }) {
             style={{ backgroundImage: `url(${article.image})` }}
           >
             <span className={`badge badge-${article.category}`}>{article.categoryLabel}</span>
+            {imageSource && (
+              <a className="image-source" href={imageSource.href} target="_blank" rel="noreferrer">
+                Источник: {imageSource.label}
+              </a>
+            )}
           </div>
 
           <div className="reader-content">

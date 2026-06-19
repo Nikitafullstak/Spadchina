@@ -4,7 +4,8 @@ import { useUser } from '../contexts/UserContext.jsx';
 export default function LoginModal({ isOpen, onClose }) {
   const { login, register, error } = useUser();
   const [mode, setMode] = useState('login');
-  const [username, setUsername] = useState('');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [localError, setLocalError] = useState(null);
@@ -17,13 +18,14 @@ export default function LoginModal({ isOpen, onClose }) {
     setLocalError(null);
 
     const ok = mode === 'login'
-      ? await login(username, password)
-      : await register(username, password);
+      ? await login(email, password)
+      : await register(name, email, password);
 
     setLoading(false);
 
     if (ok) {
-      setUsername('');
+      setName('');
+      setEmail('');
       setPassword('');
       onClose();
     } else {
@@ -37,8 +39,8 @@ export default function LoginModal({ isOpen, onClose }) {
         <h2>{mode === 'login' ? 'Вход' : 'Регистрация'}</h2>
         <p>
           {mode === 'login'
-            ? 'Введи логин и пароль, чтобы продолжить обучение.'
-            : 'Создай аккаунт, чтобы сохранять прогресс.'}
+            ? 'Введи почту и пароль, чтобы продолжить обучение.'
+            : 'Создай аккаунт: имя будет отображаться в профиле.'}
         </p>
 
         <div className="auth-toggle">
@@ -59,26 +61,39 @@ export default function LoginModal({ isOpen, onClose }) {
         </div>
 
         <form onSubmit={handleSubmit}>
+          {mode === 'register' && (
+            <label className="form-row">
+              <span className="muted">Имя</span>
+              <input
+                type="text"
+                placeholder="Как тебя показывать в профиле"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                autoFocus
+              />
+            </label>
+          )}
           <label className="form-row">
-            <span className="muted">Логин</span>
-          <input
-            type="text"
-            placeholder="Логин"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-            autoFocus
-          />
+            <span className="muted">Почта</span>
+            <input
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoFocus={mode === 'login'}
+            />
           </label>
           <label className="form-row">
             <span className="muted">Пароль</span>
-          <input
-            type="password"
-            placeholder="Пароль"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+            <input
+              type="password"
+              placeholder="Минимум 6 символов"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
           </label>
 
           {(localError || error) && (
@@ -89,7 +104,11 @@ export default function LoginModal({ isOpen, onClose }) {
             <button type="button" className="btn-ghost" onClick={onClose}>
               Отмена
             </button>
-            <button type="submit" className="btn-primary" disabled={loading || !username || !password}>
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={loading || !email || !password || (mode === 'register' && !name)}
+            >
               {loading ? 'Загрузка...' : mode === 'login' ? 'Войти' : 'Зарегистрироваться'}
             </button>
           </div>

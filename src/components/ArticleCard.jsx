@@ -1,8 +1,11 @@
+import { getImageSource } from '../utils/imageSource.js';
+
 export default function ArticleCard({ article, results, onSelect }) {
   const completedResult = (results || []).find((r) => r.article_id === article.id);
   const completed = !!completedResult;
   const score = completedResult?.score ?? 0;
   const maxScore = article.questions.length;
+  const imageSource = getImageSource(article.image);
 
   const preview = article.content?.[0]?.text?.slice(0, 100) ?? '';
 
@@ -11,6 +14,11 @@ export default function ArticleCard({ article, results, onSelect }) {
       <div className="article-image" style={{ backgroundImage: `url(${article.image})` }}>
         <span className={`badge badge-${article.category}`}>{article.categoryLabel}</span>
         {completed && <span className="article-done">✓ Прочитано</span>}
+        {imageSource && (
+          <a className="image-source" href={imageSource.href} target="_blank" rel="noreferrer">
+            Источник: {imageSource.label}
+          </a>
+        )}
       </div>
       <div className="article-body">
         <div className="article-meta">

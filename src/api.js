@@ -39,16 +39,16 @@ async function request(path, options = {}) {
 
 export const api = {
   // Auth
-  register: (username, password) =>
+  register: (name, email, password) =>
     request('/api/register', {
       method: 'POST',
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({ name, email, password }),
     }),
 
-  login: (username, password) =>
+  login: (email, password) =>
     request('/api/login', {
       method: 'POST',
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({ email, password }),
     }),
 
   me: () => request('/api/me'),
@@ -113,6 +113,10 @@ export const api = {
     }),
   joinTeamBattle: (code) =>
     request(`/api/team-battles/${encodeURIComponent(code)}/join`, {
+      method: 'POST',
+    }),
+  startTeamBattle: (code) =>
+    request(`/api/team-battles/${encodeURIComponent(code)}/start`, {
       method: 'POST',
     }),
   finishTeamBattle: (code, answers) =>

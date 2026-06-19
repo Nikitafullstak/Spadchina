@@ -75,7 +75,11 @@ func deleteArticleHandler(w http.ResponseWriter, r *http.Request) {
 
 func listUsersHandler(w http.ResponseWriter, r *http.Request) {
 	enableCORS(w, r)
-	rows, err := db.Query("SELECT id, username, role, points, created_at FROM users ORDER BY id")
+	rows, err := db.Query(`
+		SELECT id, username, COALESCE(name, username), COALESCE(email, ''), role, points, created_at
+		FROM users
+		ORDER BY id
+	`)
 	if err != nil {
 		respondError(w, "db error", http.StatusInternalServerError)
 		return
@@ -85,7 +89,7 @@ func listUsersHandler(w http.ResponseWriter, r *http.Request) {
 	users := []User{}
 	for rows.Next() {
 		var u User
-		rows.Scan(&u.ID, &u.Username, &u.Role, &u.Points, &u.CreatedAt)
+		rows.Scan(&u.ID, &u.Username, &u.Name, &u.Email, &u.Role, &u.Points, &u.CreatedAt)
 		users = append(users, u)
 	}
 

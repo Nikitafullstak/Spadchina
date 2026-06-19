@@ -24,10 +24,10 @@ export function UserProvider({ children }) {
     }
   }, [token]);
 
-  const login = async (username, password) => {
+  const login = async (email, password) => {
     setError(null);
     try {
-      const data = await api.login(username, password);
+      const data = await api.login(email, password);
       localStorage.setItem('cultcode_token', data.token);
       setToken(data.token);
       setUser(data.user);
@@ -38,10 +38,10 @@ export function UserProvider({ children }) {
     }
   };
 
-  const register = async (username, password) => {
+  const register = async (name, email, password) => {
     setError(null);
     try {
-      const data = await api.register(username, password);
+      const data = await api.register(name, email, password);
       localStorage.setItem('cultcode_token', data.token);
       setToken(data.token);
       setUser(data.user);

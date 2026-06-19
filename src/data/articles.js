@@ -1,12 +1,13 @@
 const placeImages = {
   library: 'https://upload.wikimedia.org/wikipedia/en/thumb/b/bd/N%C3%A1rodn%C3%AD_knihovna%2C_Minsk_-_panoramio.jpg/250px-N%C3%A1rodn%C3%AD_knihovna%2C_Minsk_-_panoramio.jpg',
-  mir: 'https://commons.wikimedia.org/wiki/Special:FilePath/Mir%20castle%20in%20spring.JPG',
+  mir: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Mir_castle_in_spring.JPG/1280px-Mir_castle_in_spring.JPG',
   nesvizh: 'https://commons.wikimedia.org/wiki/Special:FilePath/%D0%9D%D1%8F%D1%81%D0%B2%D1%96%D0%B6%20%D1%96%20%D0%9D%D1%8F%D1%81%D0%B2%D1%96%D0%B6%D1%81%D0%BA%D1%96%20%D0%B7%D0%B0%D0%BC%D0%B0%D0%BA%2012.jpg',
-  brest: 'https://commons.wikimedia.org/wiki/Special:FilePath/Brest%20Brest%20Fortress%20Kholm%20Gate%209209%202150.jpg',
-  forest: 'https://commons.wikimedia.org/wiki/Special:FilePath/Puszcza%20Bia%C5%82owieska%2004.jpg',
-  kalozha: 'https://commons.wikimedia.org/wiki/Special:FilePath/Horadnia%20%28Hrodna%29%2C%20Kalo%C5%BEa.%20%D0%93%D0%BE%D1%80%D0%B0%D0%B4%D0%BD%D1%8F%2C%20%D0%9A%D0%B0%D0%BB%D0%BE%D0%B6%D0%B0%20%282021%29%2002.jpg',
-  ruzhany: 'https://commons.wikimedia.org/wiki/Special:FilePath/Ruzhany%20Palace%202.jpg',
-  braslav: 'https://commons.wikimedia.org/wiki/Special:FilePath/Lake%20Snudy%20in%20Braslaw%20Lakes%20National%20Park.jpg',
+  brest: 'https://upload.wikimedia.org/wikipedia/commons/5/51/Brest_Brest_Fortress_Kholm_Gate_9209_2150.jpg',
+  forest: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/Bialowieza_National_Park_in_Poland0029.JPG/1280px-Bialowieza_National_Park_in_Poland0029.JPG',
+  kalozha: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/79/Horadnia_%28Hrodna%29%2C_Kalo%C5%BEa._%D0%93%D0%BE%D1%80%D0%B0%D0%B4%D0%BD%D1%8F%2C_%D0%9A%D0%B0%D0%BB%D0%BE%D0%B6%D0%B0_%282021%29_02.jpg/1280px-Horadnia_%28Hrodna%29%2C_Kalo%C5%BEa._%D0%93%D0%BE%D1%80%D0%B0%D0%B4%D0%BD%D1%8F%2C_%D0%9A%D0%B0%D0%BB%D0%BE%D0%B6%D0%B0_%282021%29_02.jpg',
+  ruzhany: '/images/ruzhany-palace.jpg',
+  kamenets: '/images/kamenets-tower.jpg',
+  braslav: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=900&q=80',
 };
 
 const categoryLabels = {
@@ -42,7 +43,7 @@ const attractionData = [
   ['Линия Сталина', 'history', 'medium', 'Минская область', 'brest', 'историко-культурный комплекс с укреплениями, техникой и реконструкциями', 'Место помогает увидеть, как выглядели оборонительные сооружения XX века.'],
   ['Полоцкая София', 'traditions', 'hard', 'Полоцк', 'kalozha', 'древний собор, связанный с духовной и культурной историей Полоцкой земли', 'Софийский собор в Полоцке является одним из символов древней Беларуси.'],
   ['Спасо-Евфросиниевский монастырь', 'traditions', 'medium', 'Полоцк', 'kalozha', 'монастырский комплекс, связанный с именем Евфросинии Полоцкой', 'Евфросиния Полоцкая считается одной из самых почитаемых исторических фигур Беларуси.'],
-  ['Каменецкая башня', 'history', 'hard', 'Каменец', 'ruzhany', 'оборонительная башня XIII века, известная как Белая вежа', 'Башня сохранилась как редкий пример средневековой оборонной архитектуры.'],
+  ['Каменецкая башня', 'history', 'hard', 'Каменец', 'kamenets', 'оборонительная башня XIII века, известная как Белая вежа', 'Башня сохранилась как редкий пример средневековой оборонной архитектуры.'],
   ['Лидский замок', 'history', 'medium', 'Лида', 'mir', 'кирпичный замок XIV века, связанный с эпохой Великого княжества Литовского', 'Замок был построен при князе Гедимине.'],
   ['Новогрудский замок', 'history', 'hard', 'Новогрудок', 'mir', 'руины средневекового замка на высоком холме с видом на город', 'Новогрудок связан с ранней историей Великого княжества Литовского.'],
   ['Кревский замок', 'history', 'hard', 'Крево, Гродненская область', 'mir', 'руины древнего замка, известного по событиям Кревской унии', 'Кревская уния 1385 года повлияла на историю региона.'],

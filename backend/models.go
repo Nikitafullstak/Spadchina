@@ -5,6 +5,8 @@ import "time"
 type User struct {
 	ID        int       `json:"id"`
 	Username  string    `json:"username"`
+	Name      string    `json:"name"`
+	Email     string    `json:"email"`
 	Password  string    `json:"-"`
 	Role      string    `json:"role"`
 	Points    int       `json:"points"`
@@ -46,12 +48,15 @@ type Result struct {
 }
 
 type LoginRequest struct {
-	Username string `json:"username"`
+	Email    string `json:"email"`
+	Username string `json:"username"` // Backward compatibility for old clients.
 	Password string `json:"password"`
 }
 
 type RegisterRequest struct {
-	Username string `json:"username"`
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Username string `json:"username"` // Backward compatibility for old clients.
 	Password string `json:"password"`
 }
 
@@ -145,6 +150,7 @@ type TeamBattle struct {
 	CategoryLabel string                  `json:"category_label"`
 	Questions     []DuelQuestion          `json:"questions"`
 	Participants  []TeamBattleParticipant `json:"participants"`
+	Started       bool                    `json:"started"`
 	CreatedAt     string                  `json:"created_at"`
 	UpdatedAt     string                  `json:"updated_at"`
 }
