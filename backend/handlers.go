@@ -4,11 +4,13 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -533,11 +535,9 @@ func createDuelHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var duelCount int
-	db.QueryRow("SELECT COUNT(*) FROM duels").Scan(&duelCount)
-	setIndex := duelCount % duelSetCount
+	setIndex := int(time.Now().UnixNano() % 5)
 
-	questions, err := buildDuelQuestions(setIndex)
+	questions, err := buildDuelQuestions(10)
 	if err != nil {
 		respondError(w, "not enough questions", http.StatusInternalServerError)
 		return
@@ -786,14 +786,7 @@ func scanDuel(scanner duelScanner) (Duel, bool) {
 	return duel, true
 }
 
-const duelSetSize = 5
-const duelSetCount = 10
-
-func buildDuelQuestions(setIndex int) ([]DuelQuestion, error) {
-	if setIndex < 0 || setIndex >= duelSetCount {
-		setIndex = 0
-	}
-
+func buildDuelQuestions(count int) ([]DuelQuestion, error) {
 	rows, err := db.Query("SELECT category, category_label, questions FROM articles ORDER BY id")
 	if err != nil {
 		return nil, err
@@ -817,13 +810,15 @@ func buildDuelQuestions(setIndex int) ([]DuelQuestion, error) {
 		}
 	}
 
-	start := setIndex * duelSetSize
-	end := start + duelSetSize
-	if end > len(allQuestions) {
-		return nil, fmt.Errorf("not enough questions for set %d", setIndex)
+	if len(allQuestions) < count {
+		return nil, fmt.Errorf("not enough questions")
 	}
 
-	return allQuestions[start:end], nil
+	random := rand.New(rand.NewSource(time.Now().UnixNano()))
+	random.Shuffle(len(allQuestions), func(i, j int) {
+		allQuestions[i], allQuestions[j] = allQuestions[j], allQuestions[i]
+	})
+	return allQuestions[:count], nil
 }
 
 func scoreDuelAnswers(questions []DuelQuestion, answers []DuelAnswer) int {
@@ -1124,6 +1119,7 @@ func finishTeamBattleHandler(w http.ResponseWriter, r *http.Request, code string
 		return
 	}
 
+	awardTeamBattlePoints(battle.ID)
 	respondTeamBattleByCode(w, code)
 }
 
@@ -1171,7 +1167,7 @@ func getTeamBattleByCode(code string) (TeamBattle, bool) {
 
 func getTeamBattleParticipants(battleID int) []TeamBattleParticipant {
 	rows, err := db.Query(`
-		SELECT u.username, tbp.score, tbp.updated_at
+		SELECT u.username, tbp.score, tbp.reward_points, tbp.updated_at
 		FROM team_battle_participants tbp
 		JOIN users u ON u.id = tbp.user_id
 		WHERE tbp.battle_id = ?
@@ -1185,7 +1181,7 @@ func getTeamBattleParticipants(battleID int) []TeamBattleParticipant {
 	participants := []TeamBattleParticipant{}
 	for rows.Next() {
 		var item TeamBattleParticipant
-		if err := rows.Scan(&item.Username, &item.Score, &item.UpdatedAt); err == nil {
+		if err := rows.Scan(&item.Username, &item.Score, &item.RewardPoints, &item.UpdatedAt); err == nil {
 			item.Completed = item.Score >= 0
 			participants = append(participants, item)
 		}
@@ -1251,7 +1247,15 @@ func buildTeamBattleQuestions(category string, count int) ([]DuelQuestion, error
 	if len(questions) < count {
 		return nil, fmt.Errorf("not enough questions for category")
 	}
-	return questions[:count], nil
+
+	setCount := 5
+	setIndex := int(time.Now().UnixNano() % int64(setCount))
+	offset := (len(questions) * setIndex) / setCount
+	selected := make([]DuelQuestion, 0, count)
+	for i := 0; i < count; i++ {
+		selected = append(selected, questions[(offset+i)%len(questions)])
+	}
+	return selected, nil
 }
 
 func scoreTeamBattleAnswers(questions []DuelQuestion, answers []DuelAnswer) int {
@@ -1268,6 +1272,54 @@ func scoreTeamBattleAnswers(questions []DuelQuestion, answers []DuelAnswer) int 
 		}
 	}
 	return total
+}
+
+func awardTeamBattlePoints(battleID int) {
+	rows, err := db.Query(`
+		SELECT tbp.user_id, tbp.reward_points
+		FROM team_battle_participants tbp
+		WHERE tbp.battle_id = ? AND tbp.score >= 0
+		ORDER BY tbp.score DESC, tbp.updated_at ASC
+	`, battleID)
+	if err != nil {
+		return
+	}
+	defer rows.Close()
+
+	type rankedParticipant struct {
+		UserID       int
+		RewardPoints int
+	}
+
+	participants := []rankedParticipant{}
+	for rows.Next() {
+		var item rankedParticipant
+		if err := rows.Scan(&item.UserID, &item.RewardPoints); err == nil {
+			participants = append(participants, item)
+		}
+	}
+
+	rewards := []int{60, 40, 20}
+	for index, participant := range participants {
+		targetReward := 0
+		if index < len(rewards) {
+			targetReward = rewards[index]
+		}
+		delta := targetReward - participant.RewardPoints
+		if delta == 0 {
+			continue
+		}
+
+		_, err := db.Exec(`
+			UPDATE team_battle_participants
+			SET reward_points = ?
+			WHERE battle_id = ? AND user_id = ?
+		`, targetReward, battleID, participant.UserID)
+		if err != nil {
+			continue
+		}
+		db.Exec("UPDATE users SET points = points + ? WHERE id = ?", delta, participant.UserID)
+	}
 }
 
 func isSixDigitCode(code string) bool {

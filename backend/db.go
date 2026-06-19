@@ -100,12 +100,14 @@ func initDB() {
 			battle_id INTEGER NOT NULL,
 			user_id INTEGER NOT NULL,
 			score INTEGER NOT NULL DEFAULT -1,
+			reward_points INTEGER NOT NULL DEFAULT 0,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			FOREIGN KEY (battle_id) REFERENCES team_battles(id),
 			FOREIGN KEY (user_id) REFERENCES users(id),
 			UNIQUE(battle_id, user_id)
 		);`,
+		`ALTER TABLE team_battle_participants ADD COLUMN reward_points INTEGER NOT NULL DEFAULT 0;`,
 	}
 
 	for _, q := range queries {
@@ -137,7 +139,7 @@ func normalizeArticleImages() {
 		"https://commons.wikimedia.org/wiki/Special:FilePath/Lake%20Snudy%20in%20Braslaw%20Lakes%20National%20Park.jpg":                                                                                              "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=900&q=80",
 		"https://commons.wikimedia.org/wiki/Special:FilePath/Brest%20Brest%20Fortress%20Kholm%20Gate%209209%202150.jpg":                                                                                              "https://upload.wikimedia.org/wikipedia/commons/5/51/Brest_Brest_Fortress_Kholm_Gate_9209_2150.jpg",
 		"https://commons.wikimedia.org/wiki/Special:FilePath/Horadnia%20%28Hrodna%29%2C%20Kalo%C5%BCa.%20%D0%93%D0%BE%D1%80%D0%B0%D0%B4%D0%BD%D1%8F%2C%20%D0%9A%D0%B0%D0%BB%D0%BE%D0%B6%D0%B0%20%282021%29%2002.jpg": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/79/Horadnia_%28Hrodna%29%2C_Kalo%C5%BFa._%D0%93%D0%BE%D1%80%D0%B0%D0%B4%D0%BD%D1%8F%2C_%D0%9A%D0%B0%D0%BB%D0%BE%D0%B6%D0%B0_%282021%29_02.jpg/1280px-Horadnia_%28Hrodna%29%2C_Kalo%C5%BFa._%D0%93%D0%BE%D1%80%D0%B0%D0%B4%D0%BD%D1%8F%2C_%D0%9A%D0%B0%D0%BB%D0%BE%D0%B6%D0%B0_%282021%29_02.jpg",
-		"https://upload.wikimedia.org/wikipedia/commons/7/79/Horadnia_%28Hrodna%29%2C%20Kalo%C5%BCa.%20%D0%93%D0%BE%D1%80%D0%B0%D0%B4%D0%BD%D1%8F%2C%20%D0%9A%D0%B0%D0%BB%D0%BE%D0%B6%D0%B0%20%282021%29%2002.jpg":             "https://upload.wikimedia.org/wikipedia/commons/thumb/7/79/Horadnia_%28Hrodna%29%2C_Kalo%C5%BFa._%D0%93%D0%BE%D1%80%D0%B0%D0%B4%D0%BD%D1%8F%2C_%D0%9A%D0%B0%D0%BB%D0%BE%D0%B6%D0%B0_%282021%29_02.jpg/1280px-Horadnia_%28Hrodna%29%2C_Kalo%C5%BFa._%D0%93%D0%BE%D1%80%D0%B0%D0%B4%D0%BD%D1%8F%2C_%D0%9A%D0%B0%D0%BB%D0%BE%D0%B6%D0%B0_%282021%29_02.jpg",
+		"https://upload.wikimedia.org/wikipedia/commons/7/79/Horadnia_%28Hrodna%29%2C%20Kalo%C5%BCa.%20%D0%93%D0%BE%D1%80%D0%B0%D0%B4%D0%BD%D1%8F%2C%20%D0%9A%D0%B0%D0%BB%D0%BE%D0%B6%D0%B0%20%282021%29%2002.jpg":   "https://upload.wikimedia.org/wikipedia/commons/thumb/7/79/Horadnia_%28Hrodna%29%2C_Kalo%C5%BFa._%D0%93%D0%BE%D1%80%D0%B0%D0%B4%D0%BD%D1%8F%2C_%D0%9A%D0%B0%D0%BB%D0%BE%D0%B6%D0%B0_%282021%29_02.jpg/1280px-Horadnia_%28Hrodna%29%2C_Kalo%C5%BFa._%D0%93%D0%BE%D1%80%D0%B0%D0%B4%D0%BD%D1%8F%2C_%D0%9A%D0%B0%D0%BB%D0%BE%D0%B6%D0%B0_%282021%29_02.jpg",
 		"https://commons.wikimedia.org/wiki/Special:FilePath/Ruzhany%20Palace%202.jpg":                                                                                                                               "/images/ruzhany-palace.jpg",
 		"https://upload.wikimedia.org/wikipedia/commons/a/aa/Belarus_-_Snudy_Lake.jpg":                                                                                                                               "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=900&q=80",
 		"https://commons.wikimedia.org/wiki/Special:FilePath/Mir%20castle%20in%20spring.JPG":                                                                                                                         "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Mir_castle_in_spring.JPG/1280px-Mir_castle_in_spring.JPG",

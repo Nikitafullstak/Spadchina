@@ -108,19 +108,26 @@ p {
 }
 
 .badge {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.32rem 0.78rem;
+  border: 1px solid rgba(255, 255, 255, 0.38);
   border-radius: 999px;
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 850;
+  line-height: 1;
   text-transform: uppercase;
   letter-spacing: 0;
+  box-shadow: 0 10px 24px rgba(34, 23, 21, 0.12);
 }
 
-.badge-history { background: #fff0f3; color: #8f0f22; }
-.badge-nature { background: #e4f5ec; color: #006334; }
-.badge-culture { background: #fff2d6; color: #8a5700; }
-.badge-traditions { background: #f0f7e9; color: #426b1f; }
+.badge-history { background: linear-gradient(135deg, #c8102e, #f06b7c); color: #fff; }
+.badge-nature { background: linear-gradient(135deg, #007a3d, #69c38a); color: #fff; }
+.badge-culture { background: linear-gradient(135deg, #d99a00, #ffd36a); color: #3b2700; }
+.badge-traditions { background: linear-gradient(135deg, #5f8f2f, #c3e37b); color: #20330d; }
+.badge-architecture { background: linear-gradient(135deg, #6f5a48, #d6b892); color: #fff; }
+.badge-memorial { background: linear-gradient(135deg, #364156, #9aa6b8); color: #fff; }
 .badge-easy { background: #e4f5ec; color: #006334; }
 .badge-medium { background: #fff2d6; color: #8a5700; }
 .badge-hard { background: #ffe8ec; color: #9b1c3a; }

@@ -56,7 +56,7 @@ export default function Hero({ onStart, onSelectArticle }) {
             <span className="spotlight-label">Место дня</span>
             <article
               className="spotlight-card"
-              style={{ backgroundImage: `url(${placeOfDay.image})` }}
+              style={{ backgroundImage: `url("${placeOfDay.image}")` }}
             >
               <div>
                 <span className={`badge badge-${placeOfDay.category}`}>{placeOfDay.categoryLabel}</span>
@@ -128,7 +128,7 @@ export default function Hero({ onStart, onSelectArticle }) {
               <article
                 className="featured-card"
                 key={place.id}
-                style={{ backgroundImage: `url(${place.image})` }}
+                style={{ backgroundImage: `url("${place.image}")` }}
                 onClick={() => onSelectArticle?.(place)}
                 role="button"
                 tabIndex={0}

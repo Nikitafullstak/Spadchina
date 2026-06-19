@@ -1,3 +1,5 @@
+import attractionImages from '../../scripts/image-mapping.json';
+
 const placeImages = {
   library: 'https://upload.wikimedia.org/wikipedia/en/thumb/b/bd/N%C3%A1rodn%C3%AD_knihovna%2C_Minsk_-_panoramio.jpg/250px-N%C3%A1rodn%C3%AD_knihovna%2C_Minsk_-_panoramio.jpg',
   mir: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Mir_castle_in_spring.JPG/1280px-Mir_castle_in_spring.JPG',
@@ -81,6 +83,27 @@ const attractionData = [
 const allSummaries = attractionData.map((item) => item[5]);
 const allFacts = attractionData.map((item) => item[6]);
 
+const categoryMeanings = {
+  history: 'помогает увидеть, как события прошлого повлияли на облик и память места',
+  culture: 'показывает, как городская жизнь, искусство и наследие становятся частью современной Беларуси',
+  nature: 'раскрывает ценность природных ландшафтов, экосистем и ответственного путешествия',
+  traditions: 'связывает место с духовной историей, ремёслами, обрядами или народной памятью',
+  architecture: 'помогает рассмотреть стиль, планировку, материалы и замысел постройки',
+  memorial: 'сохраняет память о людях, событиях и испытаниях, важных для страны',
+};
+
+const studyFocus = {
+  history: 'обратить внимание на эпоху, владельцев, события и следы прошлого',
+  culture: 'заметить, как место влияет на образ города и культурную жизнь',
+  nature: 'увидеть связь рельефа, воды, лесов и редких природных особенностей',
+  traditions: 'понять, какие верования, обычаи или ремёсла связаны с этим местом',
+  architecture: 'рассмотреть форму здания, детали фасада, башни, планировку и стиль',
+  memorial: 'понять, кому посвящён комплекс и какую память он сохраняет',
+};
+
+const allMeanings = Object.values(categoryMeanings);
+const allFocuses = Object.values(studyFocus);
+
 const shuffle = (array) => [...array].sort(() => Math.random() - 0.5);
 
 const getDistractors = (correct, pool) => {
@@ -96,56 +119,72 @@ const makeOptions = (correct, distractors) => {
   };
 };
 
-const makeQuestions = (item, id) => {
-  const [title, category, , region, , summary, fact] = item;
-  const categoryLabel = categoryLabels[category];
+const makeSingleQuestion = (id, question, correct, distractors) => {
+  const result = makeOptions(correct, distractors);
+  return {
+    id,
+    type: 'single',
+    question,
+    options: result.options,
+    correct: result.correct,
+  };
+};
+
+const makeQuestionSets = (item, id) => {
+  const [title, category, , , , summary, fact] = item;
   const base = id * 100;
+  const meaning = categoryMeanings[category];
+  const focus = studyFocus[category];
 
-  const summaryQuestion = makeOptions(summary, getDistractors(summary, allSummaries));
-  const factQuestion = makeOptions(fact, getDistractors(fact, allFacts));
-
-  return [
-    {
-      id: base + 1,
-      type: 'single',
-      question: `Что лучше всего описывает достопримечательность «${title}»?`,
-      options: summaryQuestion.options,
-      correct: summaryQuestion.correct,
-    },
-    {
-      id: base + 2,
-      type: 'single',
-      question: `Какой факт связан с «${title}»?`,
-      options: factQuestion.options,
-      correct: factQuestion.correct,
-    },
-    {
-      id: base + 3,
-      type: 'single',
-      question: `Где находится «${title}»?`,
-      options: [region, 'Москва', 'Санкт-Петербург', 'Киев'],
-      correct: 0,
-    },
-    {
-      id: base + 4,
-      type: 'single',
-      question: `К какой теме относится «${title}»?`,
-      options: [categoryLabel, 'Космос', 'Мореплавание', 'Промышленность Японии'],
-      correct: 0,
-    },
-    {
-      id: base + 5,
-      type: 'truefalse',
-      question: `«${title}» находится в Беларуси.`,
-      options: ['Верно', 'Неверно'],
-      correct: 0,
-    },
+  const setTemplates = [
+    [
+      [`Какая особенность делает «${title}» узнаваемым местом?`, summary, getDistractors(summary, allSummaries)],
+      [`Какой факт помогает лучше понять значение «${title}»?`, fact, getDistractors(fact, allFacts)],
+      [`Почему «${title}» стоит включить в маршрут по Беларуси?`, meaning, getDistractors(meaning, allMeanings)],
+      [`На что лучше обратить внимание при изучении «${title}»?`, focus, getDistractors(focus, allFocuses)],
+      [`Какое описание НЕ относится к «${title}»?`, getDistractors(summary, allSummaries)[0], [summary, fact, focus]],
+    ],
+    [
+      [`Что точнее всего передаёт характер места «${title}»?`, summary, getDistractors(summary, allSummaries)],
+      [`Какая деталь отличает «${title}» от случайной туристической локации?`, fact, getDistractors(fact, allFacts)],
+      [`Какой смысл лучше раскрывает категория этого места?`, meaning, getDistractors(meaning, allMeanings)],
+      [`Что поможет внимательнее рассмотреть «${title}» во время прогулки?`, focus, getDistractors(focus, allFocuses)],
+      [`Какое утверждение выглядит чужим для материала о «${title}»?`, getDistractors(fact, allFacts)[0], [summary, fact, meaning]],
+    ],
+    [
+      [`Что важно запомнить о «${title}» после прочтения материала?`, fact, getDistractors(fact, allFacts)],
+      [`Какая формулировка лучше всего описывает визуальный или исторический образ места?`, summary, getDistractors(summary, allSummaries)],
+      [`Какую роль «${title}» играет в знакомстве с Беларусью?`, meaning, getDistractors(meaning, allMeanings)],
+      [`Что стоит искать в деталях, а не просто смотреть на фото?`, focus, getDistractors(focus, allFocuses)],
+      [`Какой вариант не связан с этой достопримечательностью?`, getDistractors(summary, allSummaries)[1], [summary, fact, focus]],
+    ],
+    [
+      [`Какая мысль лучше объясняет, зачем изучать «${title}»?`, meaning, getDistractors(meaning, allMeanings)],
+      [`Какая характеристика ближе всего к описанию «${title}»?`, summary, getDistractors(summary, allSummaries)],
+      [`Какой факт относится именно к этому месту?`, fact, getDistractors(fact, allFacts)],
+      [`Что делает изучение «${title}» более осмысленным?`, focus, getDistractors(focus, allFocuses)],
+      [`Какое описание скорее подошло бы другой достопримечательности?`, getDistractors(summary, allSummaries)[2], [summary, fact, meaning]],
+    ],
+    [
+      [`С какой идеей лучше всего связать «${title}»?`, meaning, getDistractors(meaning, allMeanings)],
+      [`Какая особенность помогает узнать «${title}» среди других мест?`, summary, getDistractors(summary, allSummaries)],
+      [`Какой факт стоит использовать в рассказе об этом месте?`, fact, getDistractors(fact, allFacts)],
+      [`На какой аспект стоит обратить внимание перед ответом на вопросы?`, focus, getDistractors(focus, allFocuses)],
+      [`Какой вариант нарушает логику материала о «${title}»?`, getDistractors(fact, allFacts)[1], [summary, fact, focus]],
+    ],
   ];
+
+  return setTemplates.map((set, setIndex) => (
+    set.map(([question, correct, distractors], questionIndex) => (
+      makeSingleQuestion(base + setIndex * 10 + questionIndex + 1, question, correct, distractors)
+    ))
+  ));
 };
 
 export const articles = attractionData.map((item, index) => {
   const [title, category, difficulty, region, imageKey, summary, fact] = item;
   const id = index + 1;
+  const questionSets = makeQuestionSets(item, id);
 
   return {
     id,
@@ -155,7 +194,7 @@ export const articles = attractionData.map((item, index) => {
     difficulty,
     difficultyLabel: difficultyLabels[difficulty],
     readTime: difficulty === 'hard' ? 10 : difficulty === 'medium' ? 8 : 7,
-    image: placeImages[imageKey],
+    image: attractionImages[title] || placeImages[imageKey],
     content: [
       {
         type: 'lead',
@@ -179,6 +218,7 @@ export const articles = attractionData.map((item, index) => {
         text: `Материал рассчитан на уровень «${difficultyLabels[difficulty]}». Он подходит для подготовки к экскурсии, школьному проекту или самостоятельного знакомства с белорусским наследием.`,
       },
     ],
-    questions: makeQuestions(item, id),
+    questions: questionSets[0],
+    questionSets,
   };
 });

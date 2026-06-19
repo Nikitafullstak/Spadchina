@@ -828,8 +828,8 @@
 
 .image-source {
   position: absolute;
-  top: 1rem;
   right: 1rem;
+  bottom: 1rem;
   z-index: 2;
   padding: 0.35rem 0.65rem;
   background: rgba(34, 23, 21, 0.72);
@@ -848,6 +848,12 @@
   background: rgba(34, 23, 21, 0.88);
   border-color: rgba(255, 255, 255, 0.45);
   text-decoration: none;
+}
+
+.spotlight-card .image-source,
+.featured-card .image-source {
+  top: 1rem;
+  bottom: auto;
 }
 
 .steps-section {
@@ -1358,6 +1364,17 @@
 .article-done {
   position: relative;
   z-index: 1;
+}
+
+.article-image .badge,
+.reader-cover .badge,
+.spotlight-card .badge,
+.featured-card .badge {
+  border-color: rgba(255, 255, 255, 0.48);
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  backdrop-filter: blur(8px);
 }
 
 .article-done {
@@ -3289,6 +3306,19 @@
   min-width: 0;
   flex: 1;
   justify-content: initial;
+}
+
+.duel-challenge-title {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.duel-challenge-title strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .duel-card-row strong,

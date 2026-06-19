@@ -13,7 +13,7 @@ export default function ArticleReader({ article, onStartQuiz, onBack }) {
         <article className="reader-card">
           <div
             className="reader-cover"
-            style={{ backgroundImage: `url(${article.image})` }}
+            style={{ backgroundImage: `url("${article.image}")` }}
           >
             <span className={`badge badge-${article.category}`}>{article.categoryLabel}</span>
             {imageSource && (

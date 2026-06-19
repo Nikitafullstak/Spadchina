@@ -156,10 +156,11 @@ type TeamBattle struct {
 }
 
 type TeamBattleParticipant struct {
-	Username  string `json:"username"`
-	Score     int    `json:"score"`
-	Completed bool   `json:"completed"`
-	UpdatedAt string `json:"updated_at"`
+	Username     string `json:"username"`
+	Score        int    `json:"score"`
+	RewardPoints int    `json:"reward_points"`
+	Completed    bool   `json:"completed"`
+	UpdatedAt    string `json:"updated_at"`
 }
 
 type TeamBattleCreateRequest struct {

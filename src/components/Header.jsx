@@ -158,6 +158,20 @@ export default function Header({ activeTab, setActiveTab, onLoginOpen, onOpenCha
         <div className="user-panel">
           {user ? (
             <div className="profile-menu" ref={profileRef}>
+              {unreadCount > 0 && (
+                <button
+                  className="notification-bell has-unread"
+                  type="button"
+                  aria-label={`Новые сообщения: ${unreadCount}`}
+                  onClick={() => {
+                    onOpenChat?.();
+                    setProfileOpen(false);
+                  }}
+                >
+                  <Icon name="bell" size={18} />
+                  <strong>{unreadCount}</strong>
+                </button>
+              )}
               <button
                 className={`profile-trigger ${activeDecoration ? 'decorated' : ''}`}
                 onClick={() => setProfileOpen((open) => !open)}

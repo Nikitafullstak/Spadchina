@@ -11,7 +11,7 @@ export default function ArticleCard({ article, results, onSelect }) {
 
   return (
     <article className="article-card">
-      <div className="article-image" style={{ backgroundImage: `url(${article.image})` }}>
+      <div className="article-image" style={{ backgroundImage: `url("${article.image}")` }}>
         <span className={`badge badge-${article.category}`}>{article.categoryLabel}</span>
         {completed && <span className="article-done">✓ Прочитано</span>}
         {imageSource && (

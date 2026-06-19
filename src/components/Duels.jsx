@@ -245,7 +245,7 @@ export default function Duels({ initialOpponent, onLoginOpen }) {
           <div className="duel-topbar">
             <button className="btn-ghost" onClick={() => setActiveDuel(null)}>К батлам</button>
             <span>{activeDuel.challenger} против {activeDuel.opponent}</span>
-            <span className="duel-set-badge">Набор вопросов #{activeDuel.question_set + 1}</span>
+            <span className="duel-set-badge">10 случайных вопросов</span>
             <strong>{timeLeft} сек</strong>
           </div>
           <div className="quiz-card duel-card">
@@ -313,7 +313,7 @@ export default function Duels({ initialOpponent, onLoginOpen }) {
           <div>
             <span className="section-kicker">Культурная дуэль</span>
             <h2 className="section-title">Батлы за рейтинг</h2>
-            <p className="section-subtitle">Выбери соперника, ответь на 5 вопросов быстрее и точнее. Победитель получает +40 рейтинга.</p>
+            <p className="section-subtitle">Выбери соперника, ответь на 10 случайных вопросов быстрее и точнее. Победитель получает +40 рейтинга.</p>
           </div>
         </div>
 
@@ -346,9 +346,11 @@ export default function Duels({ initialOpponent, onLoginOpen }) {
             {incoming.map((duel) => (
               <div key={duel.id} className="duel-row duel-card-row duel-incoming-row">
                 <div className="duel-row-main">
-                  <span className="duel-label">Тебя вызвал</span>
-                  <strong>{duel.challenger}</strong>
-                  <small>5 вопросов. Победитель получает +40 рейтинга.</small>
+                  <div className="duel-challenge-title">
+                    <span className="duel-label">Тебя вызвал</span>
+                    <strong>{duel.challenger}</strong>
+                  </div>
+                  <small>10 случайных вопросов. Победитель получает +40 рейтинга.</small>
                 </div>
                 <div className="duel-row-actions incoming-actions">
                   <button className="btn-primary" onClick={() => acceptDuel(duel)}>Принять</button>

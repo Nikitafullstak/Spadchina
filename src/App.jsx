@@ -19,6 +19,7 @@ import './App.css';
 export default function App() {
   const [activeTab, setActiveTab] = useState('home');
   const [selectedArticle, setSelectedArticle] = useState(null);
+  const [quizArticle, setQuizArticle] = useState(null);
   const [quizState, setQuizState] = useState('none'); // 'none' | 'reading' | 'quiz' | 'result'
   const [quizScore, setQuizScore] = useState(0);
   const [loginOpen, setLoginOpen] = useState(false);
@@ -31,10 +32,14 @@ export default function App() {
 
   const handleSelectArticle = (article) => {
     setSelectedArticle(article);
+    setQuizArticle(null);
     setQuizState('reading');
   };
 
   const handleStartQuiz = () => {
+    const sets = selectedArticle?.questionSets?.length ? selectedArticle.questionSets : [selectedArticle.questions];
+    const randomSet = sets[Math.floor(Math.random() * sets.length)] || selectedArticle.questions;
+    setQuizArticle({ ...selectedArticle, questions: randomSet });
     setQuizState('quiz');
   };
 
@@ -45,18 +50,21 @@ export default function App() {
 
   const handleBackToLibrary = () => {
     setSelectedArticle(null);
+    setQuizArticle(null);
     setQuizState('none');
     setActiveTab('library');
   };
 
   const handleTabChange = (tab) => {
     setSelectedArticle(null);
+    setQuizArticle(null);
     setQuizState('none');
     setActiveTab(tab);
   };
 
   const handleOpenChat = (username = '') => {
     setSelectedArticle(null);
+    setQuizArticle(null);
     setQuizState('none');
     setChatPeer(username);
     setActiveTab('chat');
@@ -64,6 +72,7 @@ export default function App() {
 
   const handleOpenDuel = (username = '') => {
     setSelectedArticle(null);
+    setQuizArticle(null);
     setQuizState('none');
     setDuelPeer(username);
     setActiveTab('duels');
@@ -83,7 +92,7 @@ export default function App() {
     if (quizState === 'quiz' && selectedArticle) {
       return (
         <Quiz
-          article={selectedArticle}
+          article={quizArticle || selectedArticle}
           onFinish={handleFinishQuiz}
           onBack={() => setQuizState('reading')}
         />
@@ -93,7 +102,7 @@ export default function App() {
     if (quizState === 'result' && selectedArticle) {
       return (
         <QuizResult
-          article={selectedArticle}
+          article={quizArticle || selectedArticle}
           score={quizScore}
           onBack={handleBackToLibrary}
         />

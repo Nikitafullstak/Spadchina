@@ -398,6 +398,7 @@ export default function TeamBattles({ onLoginOpen }) {
                     <th>Участник</th>
                     <th>Статус</th>
                     <th>Результат</th>
+                    <th>Награда</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -415,6 +416,7 @@ export default function TeamBattles({ onLoginOpen }) {
                         </span>
                       </td>
                       <td><b>{item.completed ? `${item.score} очков` : 'ждём'}</b></td>
+                      <td><b>{item.reward_points > 0 ? `+${item.reward_points}` : '—'}</b></td>
                     </tr>
                   ))}
                 </tbody>
