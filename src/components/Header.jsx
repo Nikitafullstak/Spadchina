@@ -46,7 +46,7 @@ export default function Header({ activeTab, setActiveTab, onLoginOpen, onOpenCha
 
   const tabs = [
     { id: 'home', label: 'Главная' },
-    { id: 'library', label: 'Достопримечательности' },
+    { id: 'library', label: 'Места' },
     { id: 'progress', label: 'Прогресс' },
     { id: 'leaderboard', label: 'Лидеры' },
     { id: 'chat', label: 'Чат' },
@@ -124,7 +124,7 @@ export default function Header({ activeTab, setActiveTab, onLoginOpen, onOpenCha
       <div className="container header-inner">
         <div className="logo" onClick={() => setActiveTab('home')}>
           <span className="logo-icon">
-            <Icon name="home" size={22} />
+            <Icon name="map" size={22} />
           </span>
           <span className="logo-text">Спадчына</span>
         </div>

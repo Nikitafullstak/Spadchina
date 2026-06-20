@@ -9,6 +9,7 @@ export default function Chat({ initialPeer, onLoginOpen }) {
   const [activePeer, setActivePeer] = useState(initialPeer || '');
   const [messages, setMessages] = useState([]);
   const [draft, setDraft] = useState('');
+  const [peerSearch, setPeerSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -27,6 +28,12 @@ export default function Chat({ initialPeer, onLoginOpen }) {
     () => conversations.find((item) => item.username === activePeer),
     [activePeer, conversations],
   );
+
+  const filteredConversations = useMemo(() => {
+    const query = peerSearch.trim().toLowerCase();
+    if (!query) return conversations;
+    return conversations.filter((item) => item.username.toLowerCase().includes(query));
+  }, [conversations, peerSearch]);
 
   const loadConversations = useCallback(() => {
     if (!user) return Promise.resolve();
@@ -155,8 +162,21 @@ export default function Chat({ initialPeer, onLoginOpen }) {
               <strong>Диалоги</strong>
               {loading && <span>обновление</span>}
             </div>
+            <div className="chat-search">
+              <span aria-hidden="true">⌕</span>
+              <input
+                value={peerSearch}
+                onChange={(event) => setPeerSearch(event.target.value)}
+                placeholder="Найти пользователя"
+              />
+              {peerSearch && (
+                <button type="button" onClick={() => setPeerSearch('')} aria-label="Очистить поиск">
+                  ×
+                </button>
+              )}
+            </div>
             <div className="chat-peers">
-              {conversations.map((item) => (
+              {filteredConversations.map((item) => (
                 <button
                   key={item.username}
                   className={`chat-peer ${activePeer === item.username ? 'active' : ''}`}
@@ -172,6 +192,9 @@ export default function Chat({ initialPeer, onLoginOpen }) {
               ))}
               {!conversations.length && !loading && (
                 <p className="chat-empty">Пока нет других участников для диалога.</p>
+              )}
+              {conversations.length > 0 && !filteredConversations.length && (
+                <p className="chat-empty">Пользователь не найден.</p>
               )}
             </div>
           </aside>

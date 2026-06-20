@@ -75,6 +75,6 @@ func main() {
 	})
 
 	log.Println("Server starting on http://127.0.0.1:8081")
-	log.Println("Admin credentials: admin / admin123")
+	log.Println("Admin credentials: n4963959@gmail.com / admin123")
 	log.Fatal(http.ListenAndServe("127.0.0.1:8081", mux))
 }

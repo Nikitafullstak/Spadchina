@@ -1,5 +1,6 @@
-import { useMemo } from 'react';
-import { articles } from '../data/articles.js';
+import { useEffect, useMemo, useState } from 'react';
+import { api } from '../api.js';
+import { articles as localArticles } from '../data/articles.js';
 import { useUser } from '../contexts/UserContext.jsx';
 import { getImageSource } from '../utils/imageSource.js';
 
@@ -20,15 +21,53 @@ const steps = [
   { title: 'Проходи челленджи', text: 'Отвечай на вопросы и зарабатывай баллы.' },
 ];
 
+const localArticleByTitle = new Map(localArticles.map((article) => [article.title, article]));
+
+const isPublicArticle = (article) => !article.title?.startsWith('Командные вопросы:');
+
+function parseArticle(article) {
+  const localArticle = localArticleByTitle.get(article.title);
+
+  return {
+    ...article,
+    content: typeof article.content === 'string' ? JSON.parse(article.content || '[]') : article.content,
+    questions: localArticle?.questions || (
+      typeof article.questions === 'string' ? JSON.parse(article.questions || '[]') : article.questions
+    ),
+    questionSets: localArticle?.questionSets,
+    image: localArticle?.image || article.image,
+  };
+}
+
 export default function Hero({ onStart, onSelectArticle }) {
   const { user } = useUser();
-  const totalQuestions = articles.reduce((sum, article) => sum + article.questions.length, 0);
-  const featuredPlaces = articles.slice(0, 3);
+  const [articles, setArticles] = useState(localArticles);
+  const totalQuestions = articles.reduce((sum, article) => sum + (article.questions?.length || 0), 0);
+  const featuredPlaces = useMemo(() => articles.slice(-3).reverse(), [articles]);
   const placeOfDay = useMemo(
-    () => articles[Math.floor(Math.random() * articles.length)],
-    []
+    () => articles[new Date().getDate() % articles.length] || articles[0],
+    [articles]
   );
   const placeOfDaySource = getImageSource(placeOfDay.image);
+
+  useEffect(() => {
+    let ignore = false;
+
+    api.getArticles()
+      .then((data) => {
+        if (!ignore && Array.isArray(data) && data.length) {
+          const parsed = data.filter(isPublicArticle).map(parseArticle);
+          setArticles(parsed.length ? parsed : localArticles);
+        }
+      })
+      .catch(() => {
+        if (!ignore) setArticles(localArticles);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   return (
     <>

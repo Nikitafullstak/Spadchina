@@ -153,21 +153,28 @@ func normalizeArticleImages() {
 }
 
 func createAdmin() {
-	var count int
-	err := db.QueryRow("SELECT COUNT(*) FROM users WHERE role = 'admin'").Scan(&count)
+	const adminEmail = "n4963959@gmail.com"
+	const adminPassword = "admin123"
+
+	hash, _ := bcrypt.GenerateFromPassword([]byte(adminPassword), bcrypt.DefaultCost)
+	result, err := db.Exec(`
+		UPDATE users
+		SET role = 'admin'
+		WHERE lower(email) = ?
+	`, adminEmail)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if count == 0 {
-		hash, _ := bcrypt.GenerateFromPassword([]byte("admin123"), bcrypt.DefaultCost)
+	if rows, _ := result.RowsAffected(); rows == 0 {
 		_, err := db.Exec(
 			"INSERT INTO users (username, name, email, password, role, points) VALUES (?, ?, ?, ?, ?, ?)",
-			"admin", "admin", "admin@local.test", string(hash), "admin", 0,
+			"admin", "admin", adminEmail, string(hash), "admin", 0,
 		)
 		if err != nil {
 			log.Fatal(err)
 		}
-		log.Println("Admin created: username=admin, password=admin123")
 	}
+
+	log.Printf("Admin email: %s, password: %s", adminEmail, adminPassword)
 }

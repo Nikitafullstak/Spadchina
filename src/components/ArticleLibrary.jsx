@@ -7,6 +7,8 @@ import Icon from './Icon.jsx';
 
 const localArticleByTitle = new Map(localArticles.map((article) => [article.title, article]));
 
+const isPublicArticle = (article) => !article.title?.startsWith('Командные вопросы:');
+
 export default function ArticleLibrary({ onSelect }) {
   const { user } = useUser();
   const [articles, setArticles] = useState([]);
@@ -38,22 +40,24 @@ export default function ArticleLibrary({ onSelect }) {
         throw new Error('Некорректный ответ от сервера');
       }
 
-      const parsed = articlesData.map((a) => {
-        const localArticle = localArticleByTitle.get(a.title);
-        return {
-          ...a,
-          content: typeof a.content === 'string' ? JSON.parse(a.content || '[]') : a.content,
-          questions: localArticle?.questions || (typeof a.questions === 'string' ? JSON.parse(a.questions || '[]') : a.questions),
-          questionSets: localArticle?.questionSets,
-          image: localArticle?.image || a.image,
-        };
-      });
+      const parsed = articlesData
+        .filter(isPublicArticle)
+        .map((a) => {
+          const localArticle = localArticleByTitle.get(a.title);
+          return {
+            ...a,
+            content: typeof a.content === 'string' ? JSON.parse(a.content || '[]') : a.content,
+            questions: localArticle?.questions || (typeof a.questions === 'string' ? JSON.parse(a.questions || '[]') : a.questions),
+            questionSets: localArticle?.questionSets,
+            image: localArticle?.image || a.image,
+          };
+        });
 
-      if (parsed.length < localArticles.length) {
-        setArticles(localArticles);
+      if (parsed.length) {
+        setArticles(parsed);
         setFallback(false);
       } else {
-        setArticles(parsed);
+        setArticles(localArticles);
       }
       setResults(resultsData);
     } catch (err) {

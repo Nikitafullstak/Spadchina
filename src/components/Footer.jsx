@@ -40,7 +40,7 @@ export default function Footer({ onNavigate }) {
         <div className="footer-contact">
           <strong>Связь</strong>
           <p>По вопросам и предложениям пишите на почту:</p>
-          <a href="mailto:hello@spadchyna.by">hello@spadchyna.by</a>
+          <a href="mailto:n4963959@gmail.com">n4963959@gmail.com</a>
         </div>
       </div>
 
