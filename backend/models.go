@@ -168,3 +168,9 @@ type TeamBattleCreateRequest struct {
 	Category      string `json:"category"`
 	QuestionCount int    `json:"question_count"`
 }
+
+type SuggestionRequest struct {
+	Message string `json:"message"`
+	Name    string `json:"name"`
+	Email   string `json:"email"`
+}

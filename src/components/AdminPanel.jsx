@@ -169,12 +169,21 @@ export default function AdminPanel() {
   }, []);
 
   const loadData = () => {
-    Promise.all([api.getArticles(), api.getUsers()])
-      .then(([arts, usrs]) => {
+    api.getArticles()
+      .then((arts) => {
         setArticles(arts.filter(isPublicArticle));
-        setUsers(usrs);
       })
       .catch((err) => setError(err.message));
+
+    api.getUsers()
+      .then((usrs) => {
+        setUsers(usrs);
+      })
+      .catch((err) => {
+        if (err.message !== 'admin only') {
+          setError(err.message);
+        }
+      });
   };
 
   const handleSubmit = async (e) => {

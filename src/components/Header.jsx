@@ -13,6 +13,77 @@ const decorationItems = {
   'duel-champion-frame': { title: 'Победитель дуэли', short: 'VS' },
 };
 
+const headerText = {
+  ru: {
+    profileNoDecoration: 'Профиль без украшения',
+    points: 'Баллы',
+    nft: 'NFT и стикеры',
+    collection: 'Коллекция',
+    emptyCollection: 'Пока пусто. Купи первое украшение в магазине.',
+    messages: 'Сообщения',
+    shop: 'Открыть магазин',
+    progress: 'Мой прогресс',
+    duels: 'Мои батлы',
+    logout: 'Выйти',
+    email: 'Почта',
+    login: 'Войти',
+    language: 'Язык',
+    russian: 'Русский',
+    belarusian: 'Белорусский',
+    openProfile: 'Открыть профиль',
+    openMenu: 'Открыть меню',
+    closeMenu: 'Закрыть меню',
+    tabs: {
+      home: 'Главная',
+      library: 'Места',
+      progress: 'Прогресс',
+      leaderboard: 'Лидеры',
+      chat: 'Чат',
+      duels: 'Батлы',
+      teams: 'Команды',
+      shop: 'Магазин',
+      suggestions: 'Идеи',
+      admin: 'Админка',
+    },
+  },
+  be: {
+    profileNoDecoration: 'Профіль без упрыгожання',
+    points: 'Балы',
+    nft: 'NFT і стыкеры',
+    collection: 'Калекцыя',
+    emptyCollection: 'Пакуль пуста. Купі першае ўпрыгожанне ў краме.',
+    messages: 'Паведамленні',
+    shop: 'Адкрыць краму',
+    progress: 'Мой прагрэс',
+    duels: 'Мае батлы',
+    logout: 'Выйсці',
+    email: 'Пошта',
+    login: 'Увайсці',
+    language: 'Мова',
+    russian: 'Руская',
+    belarusian: 'Беларуская',
+    openProfile: 'Адкрыць профіль',
+    openMenu: 'Адкрыць меню',
+    closeMenu: 'Закрыць меню',
+    tabs: {
+      home: 'Галоўная',
+      library: 'Месцы',
+      progress: 'Прагрэс',
+      leaderboard: 'Лідары',
+      chat: 'Чат',
+      duels: 'Батлы',
+      teams: 'Каманды',
+      shop: 'Крама',
+      suggestions: 'Ідэі',
+      admin: 'Адмінка',
+    },
+  },
+};
+
+function getSavedLanguage() {
+  return localStorage.getItem('cultcode_language') === 'be' ? 'be' : 'ru';
+}
+
 function getShopState(username) {
   if (!username) return { owned: [], active: null };
 
@@ -36,7 +107,9 @@ export default function Header({ activeTab, setActiveTab, onLoginOpen, onOpenCha
   const [menuOpen, setMenuOpen] = useState(false);
   const [shopState, setShopState] = useState(() => getShopState(user?.username));
   const [unreadCount, setUnreadCount] = useState(0);
+  const [language, setLanguage] = useState(getSavedLanguage);
 
+  const text = headerText[language];
   const activeDecoration = decorationItems[shopState.active] || null;
   const displayName = user?.name || user?.username || '';
   const profileEmail = user?.email || '';
@@ -45,15 +118,23 @@ export default function Header({ activeTab, setActiveTab, onLoginOpen, onOpenCha
     .filter(Boolean);
 
   const tabs = [
-    { id: 'home', label: 'Главная' },
-    { id: 'library', label: 'Места' },
-    { id: 'progress', label: 'Прогресс' },
-    { id: 'leaderboard', label: 'Лидеры' },
-    { id: 'chat', label: 'Чат' },
-    { id: 'duels', label: 'Батлы' },
-    { id: 'teams', label: 'Команды' },
-    { id: 'shop', label: 'Магазин' },
+    { id: 'home', label: text.tabs.home },
+    { id: 'library', label: text.tabs.library },
+    { id: 'progress', label: text.tabs.progress },
+    { id: 'leaderboard', label: text.tabs.leaderboard },
+    { id: 'chat', label: text.tabs.chat },
+    { id: 'duels', label: text.tabs.duels },
+    { id: 'teams', label: text.tabs.teams },
+    { id: 'shop', label: text.tabs.shop },
+    { id: 'suggestions', label: text.tabs.suggestions },
   ];
+
+  const changeLanguage = (nextLanguage) => {
+    setLanguage(nextLanguage);
+    localStorage.setItem('cultcode_language', nextLanguage);
+    document.documentElement.lang = nextLanguage === 'be' ? 'be' : 'ru';
+    window.dispatchEvent(new CustomEvent('cultcode-language-change', { detail: { language: nextLanguage } }));
+  };
 
   useEffect(() => {
     const syncDecoration = () => setShopState(getShopState(user?.username));
@@ -95,7 +176,7 @@ export default function Header({ activeTab, setActiveTab, onLoginOpen, onOpenCha
   }, []);
 
   useEffect(() => {
-    if (!user) {
+    if (!user || activeTab === 'chat') {
       setUnreadCount(0);
       return undefined;
     }
@@ -106,17 +187,21 @@ export default function Header({ activeTab, setActiveTab, onLoginOpen, onOpenCha
         .catch(() => setUnreadCount(0));
     };
 
+    const handleChatRead = (event) => {
+      setUnreadCount(typeof event.detail?.unreadCount === 'number' ? event.detail.unreadCount : 0);
+    };
+
     loadUnread();
     const timer = window.setInterval(loadUnread, 7000);
-    window.addEventListener('cultcode-chat-read', loadUnread);
+    window.addEventListener('cultcode-chat-read', handleChatRead);
     return () => {
       window.clearInterval(timer);
-      window.removeEventListener('cultcode-chat-read', loadUnread);
+      window.removeEventListener('cultcode-chat-read', handleChatRead);
     };
-  }, [user]);
+  }, [activeTab, user]);
 
   if (isAdmin()) {
-    tabs.push({ id: 'admin', label: 'Админка' });
+    tabs.push({ id: 'admin', label: text.tabs.admin });
   }
 
   return (
@@ -148,7 +233,7 @@ export default function Header({ activeTab, setActiveTab, onLoginOpen, onOpenCha
           ref={burgerRef}
           className="burger"
           type="button"
-          aria-label={menuOpen ? 'Закрыть меню' : 'Открыть меню'}
+          aria-label={menuOpen ? text.closeMenu : text.openMenu}
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen((open) => !open)}
         >
@@ -158,25 +243,11 @@ export default function Header({ activeTab, setActiveTab, onLoginOpen, onOpenCha
         <div className="user-panel">
           {user ? (
             <div className="profile-menu" ref={profileRef}>
-              {unreadCount > 0 && (
-                <button
-                  className="notification-bell has-unread"
-                  type="button"
-                  aria-label={`Новые сообщения: ${unreadCount}`}
-                  onClick={() => {
-                    onOpenChat?.();
-                    setProfileOpen(false);
-                  }}
-                >
-                  <Icon name="bell" size={18} />
-                  <strong>{unreadCount}</strong>
-                </button>
-              )}
               <button
                 className={`profile-trigger ${activeDecoration ? 'decorated' : ''}`}
                 onClick={() => setProfileOpen((open) => !open)}
                 aria-expanded={profileOpen}
-                aria-label="Открыть профиль"
+                aria-label={text.openProfile}
               >
                 <span className="profile-avatar-small">
                   {displayName.slice(0, 1).toUpperCase()}
@@ -194,23 +265,43 @@ export default function Header({ activeTab, setActiveTab, onLoginOpen, onOpenCha
                       <span className="profile-avatar-large">{displayName.slice(0, 1).toUpperCase()}</span>
                       <div>
                         <strong>{displayName}</strong>
-                        <span>{activeDecoration ? activeDecoration.title : 'Профиль без украшения'}</span>
+                        <span>{activeDecoration ? activeDecoration.title : text.profileNoDecoration}</span>
                       </div>
                     </div>
 
                     <div className="profile-stats-mini">
                       <div>
-                        <span>Баллы</span>
+                        <span>{text.points}</span>
                         <strong>{user.points}</strong>
                       </div>
                       <div>
-                        <span>NFT и стикеры</span>
+                        <span>{text.nft}</span>
                         <strong>{ownedDecorations.length}</strong>
                       </div>
                     </div>
 
+                    <div className="profile-language-switch">
+                      <span className="profile-dropdown-label">{text.language}</span>
+                      <div>
+                        <button
+                          type="button"
+                          className={language === 'ru' ? 'active' : ''}
+                          onClick={() => changeLanguage('ru')}
+                        >
+                          {text.russian}
+                        </button>
+                        <button
+                          type="button"
+                          className={language === 'be' ? 'active' : ''}
+                          onClick={() => changeLanguage('be')}
+                        >
+                          {text.belarusian}
+                        </button>
+                      </div>
+                    </div>
+
                     <div className="profile-nft-list">
-                      <span className="profile-dropdown-label">Коллекция</span>
+                      <span className="profile-dropdown-label">{text.collection}</span>
                       {ownedDecorations.length > 0 ? (
                         <div className="profile-nft-grid">
                           {ownedDecorations.slice(0, 4).map((item) => (
@@ -218,7 +309,7 @@ export default function Header({ activeTab, setActiveTab, onLoginOpen, onOpenCha
                           ))}
                         </div>
                       ) : (
-                        <p>Пока пусто. Купи первое украшение в магазине.</p>
+                        <p>{text.emptyCollection}</p>
                       )}
                     </div>
 
@@ -231,7 +322,7 @@ export default function Header({ activeTab, setActiveTab, onLoginOpen, onOpenCha
                         }}
                       >
                         <Icon name="bell" size={17} />
-                        Сообщения {unreadCount > 0 ? `(${unreadCount})` : ''}
+                        {text.messages} {unreadCount > 0 ? `(${unreadCount})` : ''}
                       </button>
                       <button
                         className="btn-primary btn-full"
@@ -240,7 +331,7 @@ export default function Header({ activeTab, setActiveTab, onLoginOpen, onOpenCha
                           setProfileOpen(false);
                         }}
                       >
-                        Открыть магазин
+                        {text.shop}
                       </button>
                       <button
                         className="btn-ghost btn-full"
@@ -249,7 +340,7 @@ export default function Header({ activeTab, setActiveTab, onLoginOpen, onOpenCha
                           setProfileOpen(false);
                         }}
                       >
-                        Мой прогресс
+                        {text.progress}
                       </button>
                       <button
                         className="btn-ghost btn-full"
@@ -258,7 +349,7 @@ export default function Header({ activeTab, setActiveTab, onLoginOpen, onOpenCha
                           setProfileOpen(false);
                         }}
                       >
-                        Мои батлы
+                        {text.duels}
                       </button>
                       <button
                         className="btn-ghost btn-full"
@@ -267,12 +358,12 @@ export default function Header({ activeTab, setActiveTab, onLoginOpen, onOpenCha
                           setProfileOpen(false);
                         }}
                       >
-                        Выйти
+                        {text.logout}
                       </button>
                     </div>
                     {profileEmail && (
                       <div className="profile-email">
-                        <span>Почта</span>
+                        <span>{text.email}</span>
                         <strong>{profileEmail}</strong>
                       </div>
                     )}
@@ -282,7 +373,7 @@ export default function Header({ activeTab, setActiveTab, onLoginOpen, onOpenCha
             </div>
           ) : (
             <button className="btn-primary" onClick={onLoginOpen}>
-              Войти
+              {text.login}
             </button>
           )}
         </div>

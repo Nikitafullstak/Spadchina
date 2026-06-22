@@ -82,7 +82,14 @@ func authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 func adminMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return authMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		claims := userFromContext(r.Context())
-		if claims.Role != "admin" {
+		role := claims.Role
+
+		if err := db.QueryRow("SELECT role FROM users WHERE id = ?", claims.UserID).Scan(&role); err != nil {
+			respondError(w, "user not found", http.StatusUnauthorized)
+			return
+		}
+
+		if role != "admin" {
 			respondError(w, "admin only", http.StatusForbidden)
 			return
 		}

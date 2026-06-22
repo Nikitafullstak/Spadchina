@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Header from './components/Header.jsx';
 import Hero from './components/Hero.jsx';
 import ArticleLibrary from './components/ArticleLibrary.jsx';
@@ -12,8 +12,10 @@ import Chat from './components/Chat.jsx';
 import Duels from './components/Duels.jsx';
 import TeamBattles from './components/TeamBattles.jsx';
 import AdminPanel from './components/AdminPanel.jsx';
+import Suggestions from './components/Suggestions.jsx';
 import Footer from './components/Footer.jsx';
 import LoginModal from './components/LoginModal.jsx';
+import { initSiteTranslator } from './utils/siteTranslator.js';
 import './App.css';
 
 export default function App() {
@@ -25,6 +27,10 @@ export default function App() {
   const [loginOpen, setLoginOpen] = useState(false);
   const [chatPeer, setChatPeer] = useState('');
   const [duelPeer, setDuelPeer] = useState('');
+
+  useEffect(() => {
+    initSiteTranslator();
+  }, []);
 
   const handleStart = () => {
     setActiveTab('library');
@@ -126,6 +132,8 @@ export default function App() {
         return <TeamBattles onLoginOpen={() => setLoginOpen(true)} />;
       case 'shop':
         return <Shop onLoginOpen={() => setLoginOpen(true)} />;
+      case 'suggestions':
+        return <Suggestions />;
       case 'admin':
         return <AdminPanel />;
       default:

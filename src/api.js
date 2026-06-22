@@ -70,6 +70,13 @@ export const api = {
   // Leaderboard
   getLeaderboard: () => request('/api/leaderboard'),
 
+  // Suggestions
+  sendSuggestion: (message, user = {}) =>
+    request('/api/suggestions', {
+      method: 'POST',
+      body: JSON.stringify({ message, name: user.name || user.username || '', email: user.email || '' }),
+    }),
+
   // Chat
   getConversations: () => request('/api/chat/conversations'),
   getMessages: (peer) => request(`/api/chat/messages?peer=${encodeURIComponent(peer)}`),

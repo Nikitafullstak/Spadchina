@@ -3,12 +3,22 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 	"strings"
 )
+
+func getPort() string {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8081"
+	}
+	return port
+}
 
 func main() {
 	initDB()
 	defer db.Close()
+	startTelegramBot()
 
 	mux := http.NewServeMux()
 
@@ -33,6 +43,9 @@ func main() {
 
 	// Leaderboard
 	mux.HandleFunc("/api/leaderboard", getLeaderboardHandler)
+
+	// Suggestions
+	mux.HandleFunc("/api/suggestions", suggestionHandler)
 
 	// Chat
 	mux.HandleFunc("/api/chat/conversations", authMiddleware(getConversationsHandler))
@@ -74,7 +87,9 @@ func main() {
 		w.WriteHeader(http.StatusNotFound)
 	})
 
-	log.Println("Server starting on http://127.0.0.1:8081")
+	port := getPort()
+	addr := "127.0.0.1:" + port
+	log.Println("Server starting on http://" + addr)
 	log.Println("Admin credentials: n4963959@gmail.com / admin123")
-	log.Fatal(http.ListenAndServe("127.0.0.1:8081", mux))
+	log.Fatal(http.ListenAndServe(addr, mux))
 }

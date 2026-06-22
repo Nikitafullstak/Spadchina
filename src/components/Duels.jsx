@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../api.js';
 import { useUser } from '../contexts/UserContext.jsx';
 
@@ -25,6 +25,7 @@ export default function Duels({ initialOpponent, onLoginOpen }) {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState(null);
   const [error, setError] = useState(null);
+  const autoStartedDuelIds = useRef(new Set());
 
   const loadDuels = useCallback(() => {
     if (!user) return Promise.resolve();
@@ -113,6 +114,22 @@ export default function Duels({ initialOpponent, onLoginOpen }) {
     setSubmitting(false);
     setMessage(null);
   };
+
+  useEffect(() => {
+    if (!user || activeDuel) return;
+
+    const acceptedDuel = duels.find((duel) => (
+      duel.status === 'active' &&
+      duel.challenger === user.username &&
+      Number(duel.challenger_score) < 0 &&
+      !autoStartedDuelIds.current.has(duel.id)
+    ));
+
+    if (!acceptedDuel) return;
+
+    autoStartedDuelIds.current.add(acceptedDuel.id);
+    startDuel(acceptedDuel);
+  }, [activeDuel, duels, user]);
 
   const toggleAnswer = (index) => {
     if (!question) return;

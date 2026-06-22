@@ -46,17 +46,33 @@ export default function Chat({ initialPeer, onLoginOpen }) {
       .finally(() => setLoading(false));
   }, [activePeer, user]);
 
+  const markPeerAsRead = useCallback((peer) => {
+    let unreadCount = 0;
+
+    setConversations((current) => {
+      const next = current.map((item) => (
+        item.username === peer ? { ...item, unread_count: 0 } : item
+      ));
+      unreadCount = next.reduce((sum, item) => sum + (item.unread_count || 0), 0);
+      return next;
+    });
+
+    window.dispatchEvent(new CustomEvent('cultcode-chat-read', {
+      detail: { unreadCount },
+    }));
+  }, []);
+
   const loadMessages = useCallback((peer) => {
     if (!peer || !user) return Promise.resolve();
     setMessagesLoading(true);
     return api.getMessages(peer)
       .then((data) => {
         setMessages(data);
-        window.dispatchEvent(new Event('cultcode-chat-read'));
+        markPeerAsRead(peer);
       })
       .catch((err) => setError(err.message))
       .finally(() => setMessagesLoading(false));
-  }, [user]);
+  }, [markPeerAsRead, user]);
 
   useEffect(() => {
     setActivePeer(initialPeer || '');

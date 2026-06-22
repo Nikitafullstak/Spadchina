@@ -25,6 +25,7 @@ export default function Footer({ onNavigate }) {
             <a href="#library" onClick={handleClick('library')}>Достопримечательности</a>
             <a href="#leaderboard" onClick={handleClick('leaderboard')}>Лидеры</a>
             <a href="#shop" onClick={handleClick('shop')}>Магазин</a>
+            <a href="#suggestions" onClick={handleClick('suggestions')}>Идеи</a>
           </nav>
         </div>
 
@@ -41,6 +42,13 @@ export default function Footer({ onNavigate }) {
           <strong>Связь</strong>
           <p>По вопросам и предложениям пишите на почту:</p>
           <a href="mailto:n4963959@gmail.com">n4963959@gmail.com</a>
+          <a
+            href="https://t.me/Spadcgina_Support_bot"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Поддержка в Telegram
+          </a>
         </div>
       </div>
 

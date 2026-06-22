@@ -159,9 +159,9 @@ func createAdmin() {
 	hash, _ := bcrypt.GenerateFromPassword([]byte(adminPassword), bcrypt.DefaultCost)
 	result, err := db.Exec(`
 		UPDATE users
-		SET role = 'admin'
+		SET role = 'admin', password = ?
 		WHERE lower(email) = ?
-	`, adminEmail)
+	`, string(hash), adminEmail)
 	if err != nil {
 		log.Fatal(err)
 	}
