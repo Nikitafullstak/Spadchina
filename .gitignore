@@ -19,6 +19,13 @@ backend/*.db
 backend/*.log
 backend/cultcode-backend
 
+# Python virtual environments and generated files
+.venv*/
+venv/
+env/
+__pycache__/
+*.pptx
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
