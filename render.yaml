@@ -11,6 +11,8 @@ services:
         value: "5558125185"
       - key: TELEGRAM_IDEAS_CHAT_ID
         value: "5558125185"
+      - key: TELEGRAM_CHAT_ID
+        value: "5558125185"
       - key: TELEGRAM_BOT_TOKEN
         sync: false
       - key: TELEGRAM_IDEAS_BOT_TOKEN
