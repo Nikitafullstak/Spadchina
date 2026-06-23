@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: spadchina-backend
+    runtime: go
+    plan: free
+    rootDir: backend
+    buildCommand: go build -o spadchina-backend .
+    startCommand: ./spadchina-backend
+    envVars:
+      - key: TELEGRAM_SUPPORT_CHAT_ID
+        value: "5558125185"
+      - key: TELEGRAM_IDEAS_CHAT_ID
+        value: "5558125185"
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_IDEAS_BOT_TOKEN
+        sync: false

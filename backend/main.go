@@ -88,7 +88,11 @@ func main() {
 	})
 
 	port := getPort()
-	addr := "127.0.0.1:" + port
+	host := os.Getenv("HOST")
+	if host == "" {
+		host = "0.0.0.0"
+	}
+	addr := host + ":" + port
 	log.Println("Server starting on http://" + addr)
 	log.Println("Admin credentials: n4963959@gmail.com / admin123")
 	log.Fatal(http.ListenAndServe(addr, mux))
