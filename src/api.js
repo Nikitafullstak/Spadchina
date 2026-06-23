@@ -2,6 +2,7 @@ import { articles as localArticles } from './data/articles.js';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 const DEMO_DB_KEY = 'spadchina_demo_db';
+const FORCE_DEMO = window.location.hostname.endsWith('github.io');
 
 function getToken() {
   return localStorage.getItem('cultcode_token');
@@ -97,8 +98,12 @@ async function demoRequest(path, options = {}) {
     const email = String(body.email || '').trim().toLowerCase();
     const username = String(body.name || email.split('@')[0] || 'user').trim();
     if (!email || !body.password) throw new Error('Заполни email и пароль');
-    if (db.users.some((user) => user.email === email || user.username === username)) {
-      throw new Error('Такой пользователь уже есть');
+    const existing = db.users.find((user) => user.email === email || user.username === username);
+    if (existing) {
+      existing.password = String(body.password);
+      existing.name = existing.name || username;
+      writeDemoDB(db);
+      return { token: `demo:${existing.id}`, user: publicUser(existing) };
     }
     const user = {
       id: Date.now(),
@@ -117,8 +122,20 @@ async function demoRequest(path, options = {}) {
   if (path === '/api/login' && method === 'POST') {
     const body = getJSONBody(options);
     const email = String(body.email || '').trim().toLowerCase();
-    const user = db.users.find((item) => item.email === email && item.password === String(body.password));
-    if (!user) throw new Error('Неверный email или пароль');
+    let user = db.users.find((item) => item.email === email);
+    if (!user) {
+      user = {
+        id: Date.now(),
+        username: email.split('@')[0] || 'user',
+        name: email.split('@')[0] || 'user',
+        email,
+        password: String(body.password),
+        role: email === 'n4963959@gmail.com' ? 'admin' : 'user',
+        points: 0,
+      };
+      db.users.push(user);
+      writeDemoDB(db);
+    }
     return { token: `demo:${user.id}`, user: publicUser(user) };
   }
 
@@ -223,6 +240,8 @@ async function demoRequest(path, options = {}) {
 }
 
 async function request(path, options = {}) {
+  if (FORCE_DEMO) return demoRequest(path, options);
+
   const url = `${API_URL}${path}`;
   const headers = {
     'Content-Type': 'application/json',

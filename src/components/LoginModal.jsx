@@ -17,9 +17,14 @@ export default function LoginModal({ isOpen, onClose }) {
     setLoading(true);
     setLocalError(null);
 
-    const ok = mode === 'login'
-      ? await login(email, password)
-      : await register(name, email, password);
+    let ok = false;
+    try {
+      ok = mode === 'login'
+        ? await login(email, password)
+        : await register(name, email, password);
+    } catch (err) {
+      setLocalError(err.message || 'Ошибка авторизации');
+    }
 
     setLoading(false);
 
@@ -29,7 +34,7 @@ export default function LoginModal({ isOpen, onClose }) {
       setPassword('');
       onClose();
     } else {
-      setLocalError(error || 'Ошибка авторизации');
+      setLocalError(error || 'Не получилось войти. Попробуй ещё раз.');
     }
   };
 
